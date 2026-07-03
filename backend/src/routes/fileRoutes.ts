@@ -37,12 +37,30 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       folderId: folderId === 'null' || !folderId ? null : folderId,
       size: req.file.size,
       type: req.file.mimetype,
+      filename: req.file.filename,
     });
 
     await fileRecord.save();
     res.status(201).json(fileRecord);
   } catch (error) {
     res.status(500).json({ error: 'Failed to upload file' });
+  }
+});
+
+// Download file
+router.get('/download/:id', async (req: Request, res: Response) => {
+  try {
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ error: 'File not found' });
+
+    const filePath = path.join(uploadDir, file.filename);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Physical file not found on disk' });
+    }
+
+    res.download(filePath, file.name);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to download file' });
   }
 });
 
@@ -168,6 +186,12 @@ router.delete('/:id', async (req: Request, res: Response) => {
       const softFile = await File.findByIdAndUpdate(req.params.id, { isDeleted: true }, { new: true });
       if (!softFile) return res.status(404).json({ error: 'File not found' });
       return res.json({ message: 'File moved to trash', softDeleted: true });
+    }
+
+    // Delete physical file from disk
+    const filePath = path.join(uploadDir, file.filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
     }
 
     await File.findByIdAndDelete(req.params.id);

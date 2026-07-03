@@ -12,6 +12,7 @@ interface FileCardProps {
     size: number;
     type: string;
     uploadedAt?: string;
+    filename?: string;
   };
   selected?: boolean;
   onSelect?: () => void;
@@ -83,7 +84,12 @@ export const FileCard = ({ file, selected, onSelect, onDelete }: FileCardProps) 
             className="absolute top-8 right-0 w-36 rounded-xl border border-border bg-card shadow-card animate-scale-in overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
-            <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"><Download className="h-3 w-3" />Download</button>
+            <button
+              onClick={() => window.open(`http://localhost:5000/api/files/download/${file._id}`)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+            >
+              <Download className="h-3 w-3" />Download
+            </button>
             <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"><PenLine className="h-3 w-3" />Rename</button>
             <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"><Share2 className="h-3 w-3" />Share</button>
             <div className="h-px bg-border my-1" />
@@ -97,10 +103,20 @@ export const FileCard = ({ file, selected, onSelect, onDelete }: FileCardProps) 
         )}
       </div>
 
-      {/* Icon box */}
-      <div className={`mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border-2 ${cfg.bg} ${cfg.color} transition-transform duration-200 group-hover:scale-105`}>
-        {cfg.icon}
-      </div>
+      {/* Icon box or Image preview */}
+      {file.type.startsWith('image/') && file.filename ? (
+        <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-border overflow-hidden bg-muted transition-transform duration-200 group-hover:scale-105">
+          <img
+            src={`http://localhost:5000/uploads/${file.filename}`}
+            alt={file.name}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ) : (
+        <div className={`mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border-2 ${cfg.bg} ${cfg.color} transition-transform duration-200 group-hover:scale-105`}>
+          {cfg.icon}
+        </div>
+      )}
 
       {/* Name */}
       <p className="w-full text-center text-[13px] font-medium text-foreground truncate leading-tight" title={file.name}>

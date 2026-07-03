@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   Folder, FileText, Image as ImageIcon, Film, Music,
-  Archive, Code, File, Trash2, PenLine, Share2,
+  Archive, Code, File, Trash2, PenLine, Share2, Download,
   ChevronUp, ChevronDown
 } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
@@ -19,6 +19,7 @@ interface ListItem {
   createdAt?: string;
   uploadedAt?: string;
   isFolder: boolean;
+  filename?: string;
 }
 
 const getExtension = (name: string) => name.split('.').pop()?.toUpperCase() || 'FILE';
@@ -71,6 +72,19 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete }: RowProps
 
   useClickOutside(menuRef, () => setMenuOpen(false));
 
+  const isImage = !item.isFolder && item.type?.startsWith('image/') && item.filename;
+  const iconElement = isImage ? (
+    <div className="h-5 w-5 rounded overflow-hidden border border-border bg-muted flex items-center justify-center">
+      <img
+        src={`http://localhost:5000/uploads/${item.filename}`}
+        alt={item.name}
+        className="h-full w-full object-cover"
+      />
+    </div>
+  ) : (
+    typeInfo.icon
+  );
+
   return (
     <tr
       onClick={onSelect}
@@ -82,7 +96,7 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete }: RowProps
       {/* Name */}
       <td className="py-2 pl-4 pr-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="shrink-0">{typeInfo.icon}</span>
+          <span className="shrink-0">{iconElement}</span>
           <span className={`text-sm font-medium truncate max-w-xs ${selected ? 'text-primary' : 'text-foreground'}`} title={item.name}>
             {item.name}
           </span>
@@ -122,6 +136,14 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete }: RowProps
               className="absolute right-0 top-7 z-50 w-36 rounded-xl border border-border bg-card shadow-card animate-scale-in overflow-hidden"
               onClick={e => e.stopPropagation()}
             >
+              {!item.isFolder && (
+                <button
+                  onClick={() => window.open(`http://localhost:5000/api/files/download/${item._id}`)}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+                >
+                  <Download className="h-3 w-3" />Download
+                </button>
+              )}
               <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors">
                 <PenLine className="h-3 w-3" />Rename
               </button>

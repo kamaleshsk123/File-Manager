@@ -9,6 +9,7 @@ export interface IFile extends Document {
   isFavorite: boolean;
   isDeleted: boolean;
   tags: string[];
+  filename: string;
 }
 
 const FileSchema: Schema = new Schema({
@@ -20,6 +21,7 @@ const FileSchema: Schema = new Schema({
   isFavorite: { type: Boolean, default: false },
   isDeleted: { type: Boolean, default: false },
   tags: { type: [String], default: [] },
+  filename: { type: String, required: true },
 });
 
 export default mongoose.model<IFile>('File', FileSchema);
