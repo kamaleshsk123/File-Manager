@@ -12,9 +12,10 @@ interface FolderCardProps {
   selected?: boolean;
   onSelect?: () => void;
   onDelete?: () => void;
+  onRename?: () => void;
 }
 
-export const FolderCard = ({ folder, onDoubleClick, selected, onSelect, onDelete }: FolderCardProps) => {
+export const FolderCard = ({ folder, onDoubleClick, selected, onSelect, onDelete, onRename }: FolderCardProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -46,7 +47,12 @@ export const FolderCard = ({ folder, onDoubleClick, selected, onSelect, onDelete
             className="absolute top-8 right-0 w-36 rounded-xl border border-border bg-card shadow-card animate-scale-in overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
-            <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"><PenLine className="h-3 w-3" />Rename</button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onRename?.(); }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+            >
+              <PenLine className="h-3 w-3" />Rename
+            </button>
             <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"><Share2 className="h-3 w-3" />Share</button>
             <div className="h-px bg-border my-1" />
             <button 

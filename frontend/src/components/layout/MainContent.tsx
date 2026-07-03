@@ -1,12 +1,13 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchFolders, fetchFiles, createFolder, uploadFile, deleteFolder, deleteFile } from '../../api';
+import { fetchFolders, fetchFiles, createFolder, uploadFile, deleteFolder, deleteFile, renameFolder, renameFile } from '../../api';
 import { FolderCard } from '../FolderCard';
 import { FileCard } from '../FileCard';
 import { ListView } from '../ListView';
 import { PreviewPanel } from '../PreviewPanel';
 import { MarkdownPreviewModal } from '../MarkdownPreviewModal';
 import StatusBar from './StatusBar';
+import RenameModal from './RenameModal';
 import { FolderPlus, Upload, FolderOpen } from 'lucide-react';
 
 interface MainContentProps {
@@ -177,6 +178,24 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
     }
   });
 
+  const [renameItem, setRenameItem] = useState<{ _id: string; name: string; type: 'folder' | 'file' } | null>(null);
+
+  const renameFolderMutation = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) => renameFolder(id, name),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['folders'] });
+      setRenameItem(null);
+    }
+  });
+
+  const renameFileMutation = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) => renameFile(id, name),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['files'] });
+      setRenameItem(null);
+    }
+  });
+
   const selectedItem =
     folders.find((f: any) => f._id === selectedId) ||
     files.find((f: any) => f._id === selectedId);
@@ -237,6 +256,7 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
                       onSelect={() => setSelectedId(folder._id)}
                       onDoubleClick={() => onFolderOpen?.(folder._id, folder.name)}
                       onDelete={() => deleteFolderMutation.mutate(folder._id)}
+                      onRename={() => setRenameItem({ _id: folder._id, name: folder.name, type: 'folder' })}
                     />
                   ))}
                   {files.map((file: any) => (
@@ -247,6 +267,7 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
                       onSelect={() => setSelectedId(file._id)}
                       onDoubleClick={() => handleOpenFile(file)}
                       onDelete={() => deleteFileMutation.mutate(file._id)}
+                      onRename={() => setRenameItem({ _id: file._id, name: file.name, type: 'file' })}
                     />
                   ))}
                 </div>
@@ -260,6 +281,14 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
                   onOpenFile={handleOpenFile}
                   onDeleteFolder={(id) => deleteFolderMutation.mutate(id)}
                   onDeleteFile={(id) => deleteFileMutation.mutate(id)}
+                  onRenameFolder={(id) => {
+                    const f = folders.find((fol: any) => fol._id === id);
+                    if (f) setRenameItem({ _id: id, name: f.name, type: 'folder' });
+                  }}
+                  onRenameFile={(id) => {
+                    const f = files.find((fil: any) => fil._id === id);
+                    if (f) setRenameItem({ _id: id, name: f.name, type: 'file' });
+                  }}
                 />
               )
             )}
@@ -293,6 +322,23 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
           fileName={previewFile.name}
           fileId={previewFile._id}
           fileUrl={`http://localhost:5000/uploads/${previewFile.filename}`}
+        />
+      )}
+
+      {renameItem && (
+        <RenameModal
+          open={!!renameItem}
+          onClose={() => setRenameItem(null)}
+          initialName={renameItem.name}
+          type={renameItem.type}
+          onRename={(newName) => {
+            if (renameItem.type === 'folder') {
+              renameFolderMutation.mutate({ id: renameItem._id, name: newName });
+            } else {
+              renameFileMutation.mutate({ id: renameItem._id, name: newName });
+            }
+          }}
+          isPending={renameFolderMutation.isPending || renameFileMutation.isPending}
         />
       )}
     </>

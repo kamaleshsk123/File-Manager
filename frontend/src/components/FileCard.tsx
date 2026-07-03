@@ -18,6 +18,7 @@ interface FileCardProps {
   onSelect?: () => void;
   onDoubleClick?: () => void;
   onDelete?: () => void;
+  onRename?: () => void;
 }
 
 interface FileTypeConfig {
@@ -53,7 +54,7 @@ const formatSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-export const FileCard = ({ file, selected, onSelect, onDoubleClick, onDelete }: FileCardProps) => {
+export const FileCard = ({ file, selected, onSelect, onDoubleClick, onDelete, onRename }: FileCardProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const cfg = getFileConfig(file.type, file.name);
@@ -92,7 +93,12 @@ export const FileCard = ({ file, selected, onSelect, onDoubleClick, onDelete }: 
             >
               <Download className="h-3 w-3" />Download
             </button>
-            <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"><PenLine className="h-3 w-3" />Rename</button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onRename?.(); }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+            >
+              <PenLine className="h-3 w-3" />Rename
+            </button>
             <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"><Share2 className="h-3 w-3" />Share</button>
             <div className="h-px bg-border my-1" />
             <button 

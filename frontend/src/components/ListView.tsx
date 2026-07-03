@@ -62,9 +62,10 @@ interface RowProps {
   onSelect: () => void;
   onDoubleClick?: () => void;
   onDelete?: () => void;
+  onRename?: () => void;
 }
 
-const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete }: RowProps) => {
+const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename }: RowProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const typeInfo = getTypeInfo(item);
@@ -144,7 +145,10 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete }: RowProps
                   <Download className="h-3 w-3" />Download
                 </button>
               )}
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors">
+              <button
+                onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onRename?.(); }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+              >
                 <PenLine className="h-3 w-3" />Rename
               </button>
               <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors">
@@ -200,10 +204,12 @@ interface ListViewProps {
   onOpenFile?: (file: any) => void;
   onDeleteFolder?: (id: string) => void;
   onDeleteFile?: (id: string) => void;
+  onRenameFolder?: (id: string) => void;
+  onRenameFile?: (id: string) => void;
 }
 
 export const ListView = ({
-  folders, files, selectedId, onSelect, onFolderOpen, onOpenFile, onDeleteFolder, onDeleteFile
+  folders, files, selectedId, onSelect, onFolderOpen, onOpenFile, onDeleteFolder, onDeleteFile, onRenameFolder, onRenameFile
 }: ListViewProps) => {
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -264,6 +270,7 @@ export const ListView = ({
                 : () => onOpenFile?.(item)
               }
               onDelete={item.isFolder ? () => onDeleteFolder?.(item._id) : () => onDeleteFile?.(item._id)}
+              onRename={item.isFolder ? () => onRenameFolder?.(item._id) : () => onRenameFile?.(item._id)}
             />
           ))}
         </tbody>

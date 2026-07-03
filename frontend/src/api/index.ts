@@ -89,3 +89,23 @@ export const toggleFavoriteFile = async (id: string) => {
   if (!res.ok) throw new Error('Failed to toggle favorite');
   return res.json();
 };
+
+export const renameFolder = async (id: string, name: string) => {
+  const res = await fetch(`${API_URL}/folders/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error('Failed to rename folder');
+  return res.json();
+};
+
+export const renameFile = async (id: string, name: string) => {
+  const res = await fetch(`${API_URL}/files/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error('Failed to rename file');
+  return res.json();
+};
