@@ -3,7 +3,6 @@ import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
 import Toolbar from './components/layout/Toolbar';
 import Breadcrumb from './components/layout/Breadcrumb';
-import StatusBar from './components/layout/StatusBar';
 import MainContent from './components/layout/MainContent';
 import { NewFolderModal, UploadModal } from './components/layout/MainContent';
 
@@ -58,7 +57,6 @@ function App() {
             view={view}
             activeTab={activeTab}
           />
-          <StatusBar />
         </div>
       </div>
     </div>

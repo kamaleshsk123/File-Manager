@@ -17,6 +17,7 @@ interface PreviewPanelProps {
   } | null;
   onClose: () => void;
   onOpenFolder?: (id: string, name: string) => void;
+  onOpenFile?: (item: any) => void;
 }
 
 const getFileConfig = (type: string, name: string) => {
@@ -45,7 +46,7 @@ const formatSize = (bytes?: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-export const PreviewPanel = ({ item, onClose, onOpenFolder }: PreviewPanelProps) => {
+export const PreviewPanel = ({ item, onClose, onOpenFolder, onOpenFile }: PreviewPanelProps) => {
   if (!item) return null;
 
   // Determine if it is a folder.
@@ -170,7 +171,10 @@ export const PreviewPanel = ({ item, onClose, onOpenFolder }: PreviewPanelProps)
           ) : (
             <div className="flex flex-col gap-2">
               <button
-                onClick={() => window.open(`http://localhost:5000/uploads/${item.filename}`)}
+                onClick={() => {
+                  if (onOpenFile) onOpenFile(item);
+                  else window.open(`http://localhost:5000/uploads/${item.filename}`);
+                }}
                 className="w-full flex items-center justify-center gap-2 h-10 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted transition-colors"
               >
                 <ExternalLink className="h-4 w-4" /> Open File

@@ -20,7 +20,6 @@ const sections = [
     title: 'Main',
     items: [
       { id: 'home',     label: 'Home',      icon: <Home className="h-4 w-4" /> },
-      { id: 'all',      label: 'All Files',  icon: <FolderOpen className="h-4 w-4" /> },
       { id: 'recent',   label: 'Recent',     icon: <Clock className="h-4 w-4" /> },
     ]
   },
@@ -35,7 +34,6 @@ const sections = [
   {
     title: 'System',
     items: [
-      { id: 'storage',  label: 'Storage',   icon: <HardDrive className="h-4 w-4" /> },
       { id: 'trash',    label: 'Trash',     icon: <Trash2 className="h-4 w-4" />, badge: 0 },
       { id: 'settings', label: 'Settings',  icon: <Settings className="h-4 w-4" /> },
     ]

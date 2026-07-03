@@ -197,12 +197,13 @@ interface ListViewProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onFolderOpen?: (id: string, name: string) => void;
+  onOpenFile?: (file: any) => void;
   onDeleteFolder?: (id: string) => void;
   onDeleteFile?: (id: string) => void;
 }
 
 export const ListView = ({
-  folders, files, selectedId, onSelect, onFolderOpen, onDeleteFolder, onDeleteFile
+  folders, files, selectedId, onSelect, onFolderOpen, onOpenFile, onDeleteFolder, onDeleteFile
 }: ListViewProps) => {
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -258,7 +259,10 @@ export const ListView = ({
               item={item}
               selected={selectedId === item._id}
               onSelect={() => onSelect(item._id)}
-              onDoubleClick={item.isFolder ? () => onFolderOpen?.(item._id, item.name) : undefined}
+              onDoubleClick={item.isFolder 
+                ? () => onFolderOpen?.(item._id, item.name) 
+                : () => onOpenFile?.(item)
+              }
               onDelete={item.isFolder ? () => onDeleteFolder?.(item._id) : () => onDeleteFile?.(item._id)}
             />
           ))}
