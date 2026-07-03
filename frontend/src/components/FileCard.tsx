@@ -16,6 +16,7 @@ interface FileCardProps {
   };
   selected?: boolean;
   onSelect?: () => void;
+  onDoubleClick?: () => void;
   onDelete?: () => void;
 }
 
@@ -52,7 +53,7 @@ const formatSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-export const FileCard = ({ file, selected, onSelect, onDelete }: FileCardProps) => {
+export const FileCard = ({ file, selected, onSelect, onDoubleClick, onDelete }: FileCardProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const cfg = getFileConfig(file.type, file.name);
@@ -62,6 +63,7 @@ export const FileCard = ({ file, selected, onSelect, onDelete }: FileCardProps) 
   return (
     <div
       onClick={onSelect}
+      onDoubleClick={onDoubleClick}
       className={`group relative flex flex-col items-center p-4 rounded-xl border cursor-pointer card-hover select-none
         ${selected
           ? 'border-primary/50 bg-primary/5 ring-2 ring-primary/20'

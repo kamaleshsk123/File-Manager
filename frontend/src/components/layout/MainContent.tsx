@@ -1,9 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchFolders, fetchFiles, createFolder, uploadFile, deleteFolder, deleteFile } from '../../api';
 import { FolderCard } from '../FolderCard';
 import { FileCard } from '../FileCard';
 import { ListView } from '../ListView';
+import { PreviewPanel } from '../PreviewPanel';
 import { FolderPlus, Upload, FolderOpen } from 'lucide-react';
 
 interface MainContentProps {
@@ -133,6 +134,11 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
+  // Reset selection when changing folders or tabs
+  useEffect(() => {
+    setSelectedId(null);
+  }, [currentFolderId, activeTab]);
+
   const { data: folders = [], isLoading: fl } = useQuery({
     queryKey: ['folders', currentFolderId, activeTab],
     queryFn: () => fetchFolders(currentFolderId, activeTab),
@@ -157,6 +163,10 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
     }
   });
 
+  const selectedItem =
+    folders.find((f: any) => f._id === selectedId) ||
+    files.find((f: any) => f._id === selectedId);
+
   const isLoading = fl || fil;
   const totalItems = folders.length + files.length;
 
@@ -165,74 +175,85 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
       <NewFolderModal open={newFolderOpen} onClose={() => setNewFolderOpen(false)} parentId={currentFolderId} />
       <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} folderId={currentFolderId} />
 
-      <main className="flex-1 overflow-y-auto bg-background">
-        {isLoading ? (
-          <div className={`p-5 grid gap-3 ${view === 'grid' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' : 'grid-cols-1'}`}>
-            {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
-          </div>
-        ) : totalItems === 0 ? (
-          /* Empty state */
-          <div className="flex h-full flex-col items-center justify-center gap-4 p-8 animate-fade-in">
-            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-muted/60 border border-border">
-              <FolderOpen className="h-10 w-10 text-muted-foreground/50" />
+      <div className="flex flex-1 overflow-hidden h-full w-full">
+        <main className="flex-1 overflow-y-auto bg-background">
+          {isLoading ? (
+            <div className={`p-5 grid gap-3 ${view === 'grid' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' : 'grid-cols-1'}`}>
+              {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
-            <div className="text-center">
-              <h3 className="text-base font-semibold text-foreground mb-1">No files here yet</h3>
-              <p className="text-sm text-muted-foreground max-w-xs">Upload files or create folders to organize your documents.</p>
-            </div>
-            {activeTab === 'home' && (
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={() => setNewFolderOpen(true)}
-                  className="flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border bg-card text-sm font-medium text-foreground hover:bg-muted transition-colors shadow-soft"
-                >
-                  <FolderPlus className="h-4 w-4" /> New Folder
-                </button>
-                <button
-                  onClick={() => setUploadOpen(true)}
-                  className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-all shadow-soft"
-                >
-                  <Upload className="h-4 w-4" /> Upload File
-                </button>
+          ) : totalItems === 0 ? (
+            /* Empty state */
+            <div className="flex h-full flex-col items-center justify-center gap-4 p-8 animate-fade-in">
+              <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-muted/60 border border-border">
+                <FolderOpen className="h-10 w-10 text-muted-foreground/50" />
               </div>
-            )}
-          </div>
-        ) : (
-          view === 'grid' ? (
-            <div className="p-5 animate-fade-in grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {folders.map((folder: any) => (
-                <FolderCard
-                  key={folder._id}
-                  folder={folder}
-                  selected={selectedId === folder._id}
-                  onSelect={() => setSelectedId(folder._id)}
-                  onDoubleClick={() => onFolderOpen?.(folder._id, folder.name)}
-                  onDelete={() => deleteFolderMutation.mutate(folder._id)}
-                />
-              ))}
-              {files.map((file: any) => (
-                <FileCard
-                  key={file._id}
-                  file={file}
-                  selected={selectedId === file._id}
-                  onSelect={() => setSelectedId(file._id)}
-                  onDelete={() => deleteFileMutation.mutate(file._id)}
-                />
-              ))}
+              <div className="text-center">
+                <h3 className="text-base font-semibold text-foreground mb-1">No files here yet</h3>
+                <p className="text-sm text-muted-foreground max-w-xs">Upload files or create folders to organize your documents.</p>
+              </div>
+              {activeTab === 'home' && (
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => setNewFolderOpen(true)}
+                    className="flex items-center gap-1.5 h-9 px-4 rounded-lg border border-border bg-card text-sm font-medium text-foreground hover:bg-muted transition-colors shadow-soft"
+                  >
+                    <FolderPlus className="h-4 w-4" /> New Folder
+                  </button>
+                  <button
+                    onClick={() => setUploadOpen(true)}
+                    className="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-all shadow-soft"
+                  >
+                    <Upload className="h-4 w-4" /> Upload File
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
-            <ListView
-              folders={folders}
-              files={files}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              onFolderOpen={onFolderOpen}
-              onDeleteFolder={(id) => deleteFolderMutation.mutate(id)}
-              onDeleteFile={(id) => deleteFileMutation.mutate(id)}
-            />
-          )
+            view === 'grid' ? (
+              <div className="p-5 animate-fade-in grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {folders.map((folder: any) => (
+                  <FolderCard
+                    key={folder._id}
+                    folder={folder}
+                    selected={selectedId === folder._id}
+                    onSelect={() => setSelectedId(folder._id)}
+                    onDoubleClick={() => onFolderOpen?.(folder._id, folder.name)}
+                    onDelete={() => deleteFolderMutation.mutate(folder._id)}
+                  />
+                ))}
+                {files.map((file: any) => (
+                  <FileCard
+                    key={file._id}
+                    file={file}
+                    selected={selectedId === file._id}
+                    onSelect={() => setSelectedId(file._id)}
+                    onDoubleClick={() => window.open(`http://localhost:5000/uploads/${file.filename}`)}
+                    onDelete={() => deleteFileMutation.mutate(file._id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <ListView
+                folders={folders}
+                files={files}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                onFolderOpen={onFolderOpen}
+                onDeleteFolder={(id) => deleteFolderMutation.mutate(id)}
+                onDeleteFile={(id) => deleteFileMutation.mutate(id)}
+              />
+            )
+          )}
+        </main>
+
+        {selectedItem && (
+          <PreviewPanel
+            item={selectedItem}
+            onClose={() => setSelectedId(null)}
+            onOpenFolder={onFolderOpen}
+          />
         )}
-      </main>
+      </div>
     </>
   );
 };
