@@ -9,7 +9,7 @@ import { MarkdownPreviewModal } from '../MarkdownPreviewModal';
 import StatusBar from './StatusBar';
 import RenameModal from './RenameModal';
 import ShareModal from './ShareModal';
-import { FolderPlus, Upload, FolderOpen } from 'lucide-react';
+import { FolderPlus, Upload, FolderOpen, X } from 'lucide-react';
 
 interface MainContentProps {
   currentFolderId?: string | null;
@@ -74,58 +74,205 @@ const NewFolderModal = ({ open, onClose, parentId }: { open: boolean; onClose: (
 };
 
 // --- Upload Modal ---
+const ALLOWED_EXTS = ['.pdf', '.md'];
+const ALLOWED_TYPES = ['application/pdf', 'text/markdown', 'text/x-markdown'];
+
+const isAllowed = (file: File) => {
+  const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+  return ALLOWED_EXTS.includes(ext) || ALLOWED_TYPES.includes(file.type);
+};
+
+const formatSize = (bytes: number) => {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
+
+interface QueuedFile { file: File; id: string; valid: boolean; }
+
 const UploadModal = ({ open, onClose, folderId }: { open: boolean; onClose: () => void; folderId?: string | null }) => {
   const [dragging, setDragging] = useState(false);
+  const [queue, setQueue] = useState<QueuedFile[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
+
   const mutation = useMutation({
-    mutationFn: (file: File) => uploadFile(file, folderId),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['files'] }); onClose(); }
+    mutationFn: (files: File[]) => uploadFile(files, folderId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['files'] });
+      setQueue([]);
+      setError(null);
+      onClose();
+    },
+    onError: (err: Error) => {
+      setError(err.message);
+    },
   });
 
-  const handleFiles = (files: FileList | null) => {
-    if (files?.[0]) mutation.mutate(files[0]);
+  const addFiles = (incoming: FileList | null) => {
+    if (!incoming) return;
+    const next: QueuedFile[] = Array.from(incoming).map(file => ({
+      file,
+      id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
+      valid: isAllowed(file),
+    }));
+    setQueue(prev => {
+      // Avoid duplicate names
+      const existing = new Set(prev.map(q => q.file.name));
+      return [...prev, ...next.filter(n => !existing.has(n.file.name))];
+    });
+  };
+
+  const removeFile = (id: string) => setQueue(prev => prev.filter(q => q.id !== id));
+
+  const validFiles = queue.filter(q => q.valid).map(q => q.file);
+
+  const handleUpload = () => {
+    setError(null);
+    if (validFiles.length === 0) return;
+    mutation.mutate(validFiles);
+  };
+
+  const handleClose = () => {
+    setQueue([]);
+    setError(null);
+    onClose();
   };
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-card p-6 animate-scale-in" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center gap-3 mb-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <Upload className="h-5 w-5 text-primary" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 animate-fade-in" onClick={handleClose}>
+      <div
+        className="w-full max-w-md rounded border border-border bg-white shadow-win-menu animate-scale-in overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Title bar */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-white">
+          <div className="flex items-center gap-2">
+            <Upload className="h-4 w-4 text-primary" />
+            <h2 className="text-[13px] font-semibold text-foreground">Upload Files</h2>
           </div>
-          <div>
-            <h2 className="text-base font-semibold text-foreground">Upload File</h2>
-            <p className="text-xs text-muted-foreground">Drop or click to choose a file</p>
-          </div>
-        </div>
-
-        <div
-          onDragOver={e => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={e => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
-          onClick={() => inputRef.current?.click()}
-          className={`upload-area flex flex-col items-center justify-center gap-2 rounded-xl p-8 cursor-pointer transition-all mb-4 ${dragging ? 'dragover' : ''}`}
-        >
-          <Upload className={`h-8 w-8 mb-1 transition-colors ${dragging ? 'text-primary' : 'text-muted-foreground'}`} />
-          <p className="text-sm font-medium text-foreground">Drop file here</p>
-          <p className="text-xs text-muted-foreground">or click to browse</p>
-          <input ref={inputRef} type="file" className="hidden" onChange={e => handleFiles(e.target.files)} />
-        </div>
-
-        <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="h-9 px-4 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors">
-            Cancel
+          <button onClick={handleClose} className="h-6 w-6 flex items-center justify-center rounded hover:bg-[#E5E5E5] text-muted-foreground transition-colors">
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
-        {mutation.isPending && (
-          <p className="mt-3 text-center text-xs text-primary animate-pulse">Uploading...</p>
-        )}
+
+        <div className="px-5 pt-4 pb-5">
+          {/* Restriction notice */}
+          <p className="text-[11px] text-muted-foreground mb-3 flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-primary" />
+            Only <strong className="mx-0.5">.pdf</strong> and <strong className="mx-0.5">.md</strong> files are supported. Multiple files allowed.
+          </p>
+
+          {/* Drop zone */}
+          <div
+            onDragOver={e => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={e => { e.preventDefault(); setDragging(false); addFiles(e.dataTransfer.files); }}
+            onClick={() => inputRef.current?.click()}
+            className={`flex flex-col items-center justify-center gap-1.5 rounded border-2 border-dashed p-6 cursor-pointer transition-colors mb-3
+              ${dragging
+                ? 'border-primary bg-[#E5F3FF]'
+                : 'border-border bg-[#FAFAFA] hover:border-primary/50 hover:bg-[#F5F5F5]'
+              }`}
+          >
+            <Upload className={`h-7 w-7 ${dragging ? 'text-primary' : 'text-muted-foreground'}`} />
+            <p className="text-[12px] font-medium text-foreground">Drop files here or click to browse</p>
+            <p className="text-[11px] text-muted-foreground">Supported: PDF, Markdown (.md)</p>
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              accept=".pdf,.md,application/pdf,text/markdown"
+              className="hidden"
+              onChange={e => { addFiles(e.target.files); e.target.value = ''; }}
+            />
+          </div>
+
+          {/* File queue */}
+          {queue.length > 0 && (
+            <div className="border border-border rounded overflow-hidden mb-3">
+              <div className="bg-[#F3F3F3] border-b border-border px-3 py-1.5 flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                  {queue.length} file{queue.length !== 1 ? 's' : ''} selected
+                </span>
+                <button
+                  onClick={() => setQueue([])}
+                  className="text-[11px] text-muted-foreground hover:text-red-600 transition-colors"
+                >
+                  Clear all
+                </button>
+              </div>
+              <div className="max-h-44 overflow-y-auto">
+                {queue.map(q => (
+                  <div
+                    key={q.id}
+                    className={`flex items-center gap-2 px-3 py-2 border-b border-border last:border-0
+                      ${q.valid ? 'bg-white' : 'bg-red-50'}`}
+                  >
+                    {/* Icon */}
+                    <div className={`shrink-0 w-6 h-6 flex items-center justify-center rounded text-[10px] font-bold text-white
+                      ${q.valid ? 'bg-primary' : 'bg-red-500'}`}
+                    >
+                      {q.file.name.split('.').pop()?.toUpperCase().slice(0, 3)}
+                    </div>
+                    {/* Name + size */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] text-foreground truncate" title={q.file.name}>{q.file.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{formatSize(q.file.size)}</p>
+                    </div>
+                    {/* Status badge */}
+                    {!q.valid && (
+                      <span className="text-[10px] text-red-600 font-semibold bg-red-100 px-1.5 py-0.5 rounded shrink-0">
+                        Invalid type
+                      </span>
+                    )}
+                    {/* Remove button */}
+                    <button
+                      onClick={() => removeFile(q.id)}
+                      className="h-5 w-5 flex items-center justify-center rounded hover:bg-[#E5E5E5] text-muted-foreground transition-colors shrink-0"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <p className="text-[12px] text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2 mb-3">
+              {error}
+            </p>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-2 justify-end">
+            <button onClick={handleClose} className="h-8 px-5 rounded border border-border text-[12px] font-normal text-foreground hover:bg-[#E5E5E5] transition-colors">
+              Cancel
+            </button>
+            <button
+              onClick={handleUpload}
+              disabled={validFiles.length === 0 || mutation.isPending}
+              className="h-8 px-5 rounded bg-primary text-white text-[12px] font-normal hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+            >
+              {mutation.isPending
+                ? <>Uploading…</>
+                : <>
+                    <Upload className="h-3.5 w-3.5" />
+                    Upload {validFiles.length > 0 ? `${validFiles.length} file${validFiles.length !== 1 ? 's' : ''}` : ''}
+                  </>
+              }
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
+
 
 // --- Skeleton loader ---
 const SkeletonCard = () => (

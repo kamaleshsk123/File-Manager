@@ -13,7 +13,9 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Multer setup
+const ALLOWED_MIME_TYPES = ['application/pdf', 'text/markdown', 'text/x-markdown'];
+const ALLOWED_EXTENSIONS = ['.pdf', '.md'];
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -22,29 +24,50 @@ const storage = multer.diskStorage({
     cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
-const upload = multer({ storage });
 
-// Upload file — must be BEFORE the /:folderId route to avoid conflict
-router.post('/upload', upload.single('file'), async (req: Request, res: Response) => {
+// Reject any file that is not .pdf or .md
+const fileFilter: multer.Options['fileFilter'] = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  const isMime = ALLOWED_MIME_TYPES.includes(file.mimetype);
+  const isExt  = ALLOWED_EXTENSIONS.includes(ext);
+  if (isMime || isExt) {
+    cb(null, true);
+  } else {
+    cb(new Error(`Only .pdf and .md files are allowed. Received: ${file.originalname}`));
+  }
+};
+
+// Allow up to 20 files at once
+const upload = multer({ storage, fileFilter, limits: { files: 20, fileSize: 50 * 1024 * 1024 } });
+
+// Upload files (multiple) — only .pdf and .md allowed
+router.post('/upload', upload.array('files', 20), async (req: Request, res: Response) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+    const files = req.files as Express.Multer.File[];
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
     }
 
     const { folderId } = req.body;
+    const resolvedFolderId = folderId === 'null' || !folderId ? null : folderId;
 
-    const fileRecord = new File({
-      name: req.file.originalname,
-      folderId: folderId === 'null' || !folderId ? null : folderId,
-      size: req.file.size,
-      type: req.file.mimetype,
-      filename: req.file.filename,
-    });
+    // Save all files to DB in parallel
+    const saved = await Promise.all(
+      files.map(file =>
+        new File({
+          name: file.originalname,
+          folderId: resolvedFolderId,
+          size: file.size,
+          type: file.mimetype,
+          filename: file.filename,
+        }).save()
+      )
+    );
 
-    await fileRecord.save();
-    res.status(201).json(fileRecord);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to upload file' });
+    res.status(201).json(saved);
+  } catch (error: any) {
+    // Multer fileFilter rejection comes through here
+    res.status(400).json({ error: error.message || 'Failed to upload file(s)' });
   }
 });
 

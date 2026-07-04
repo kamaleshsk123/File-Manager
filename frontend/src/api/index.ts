@@ -36,17 +36,19 @@ export const fetchFiles = async (folderId?: string | null, filterType?: string) 
   return res.json();
 };
 
-export const uploadFile = async (file: File, folderId?: string | null) => {
+export const uploadFile = async (files: File[], folderId?: string | null) => {
   const formData = new FormData();
-  formData.append('file', file);
-  if (folderId) formData.append('folderId', folderId);
-  else formData.append('folderId', 'null');
+  files.forEach(file => formData.append('files', file));
+  formData.append('folderId', folderId ?? 'null');
 
   const res = await fetch(`${API_URL}/files/upload`, {
     method: 'POST',
     body: formData,
   });
-  if (!res.ok) throw new Error('Failed to upload file');
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Failed to upload file(s)');
+  }
   return res.json();
 };
 
