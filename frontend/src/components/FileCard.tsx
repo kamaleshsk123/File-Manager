@@ -13,12 +13,14 @@ interface FileCardProps {
     type: string;
     uploadedAt?: string;
     filename?: string;
+    isShared?: boolean;
   };
   selected?: boolean;
   onSelect?: () => void;
   onDoubleClick?: () => void;
   onDelete?: () => void;
   onRename?: () => void;
+  onShare?: () => void;
 }
 
 interface FileTypeConfig {
@@ -54,7 +56,7 @@ const formatSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-export const FileCard = ({ file, selected, onSelect, onDoubleClick, onDelete, onRename }: FileCardProps) => {
+export const FileCard = ({ file, selected, onSelect, onDoubleClick, onDelete, onRename, onShare }: FileCardProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const cfg = getFileConfig(file.type, file.name);
@@ -99,7 +101,12 @@ export const FileCard = ({ file, selected, onSelect, onDoubleClick, onDelete, on
             >
               <PenLine className="h-3 w-3" />Rename
             </button>
-            <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"><Share2 className="h-3 w-3" />Share</button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onShare?.(); }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+            >
+              <Share2 className="h-3 w-3" />Share
+            </button>
             <div className="h-px bg-border my-1" />
             <button 
               onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete?.(); }}
@@ -127,9 +134,12 @@ export const FileCard = ({ file, selected, onSelect, onDoubleClick, onDelete, on
       )}
 
       {/* Name */}
-      <p className="w-full text-center text-[13px] font-medium text-foreground truncate leading-tight" title={file.name}>
-        {file.name}
-      </p>
+      <div className="flex items-center justify-center gap-1 w-full max-w-full px-1">
+        {file.isShared && <Share2 className="h-3 w-3 text-primary shrink-0" />}
+        <p className="text-[13px] font-medium text-foreground truncate leading-tight" title={file.name}>
+          {file.name}
+        </p>
+      </div>
       <p className="mt-0.5 text-[11px] text-muted-foreground">{formatSize(file.size)}</p>
     </div>
   );

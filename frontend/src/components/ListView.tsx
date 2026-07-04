@@ -20,6 +20,7 @@ interface ListItem {
   uploadedAt?: string;
   isFolder: boolean;
   filename?: string;
+  isShared?: boolean;
 }
 
 const getExtension = (name: string) => name.split('.').pop()?.toUpperCase() || 'FILE';
@@ -63,9 +64,10 @@ interface RowProps {
   onDoubleClick?: () => void;
   onDelete?: () => void;
   onRename?: () => void;
+  onShare?: () => void;
 }
 
-const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename }: RowProps) => {
+const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename, onShare }: RowProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const typeInfo = getTypeInfo(item);
@@ -98,7 +100,8 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename }
       <td className="py-2 pl-4 pr-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="shrink-0">{iconElement}</span>
-          <span className={`text-sm font-medium truncate max-w-xs ${selected ? 'text-primary' : 'text-foreground'}`} title={item.name}>
+          <span className={`text-sm font-medium truncate max-w-xs flex items-center gap-1.5 ${selected ? 'text-primary' : 'text-foreground'}`} title={item.name}>
+            {item.isShared && <Share2 className="h-3.5 w-3.5 text-primary shrink-0 animate-pulse" />}
             {item.name}
           </span>
         </div>
@@ -151,7 +154,10 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename }
               >
                 <PenLine className="h-3 w-3" />Rename
               </button>
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors">
+              <button
+                onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onShare?.(); }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+              >
                 <Share2 className="h-3 w-3" />Share
               </button>
               <div className="h-px bg-border my-1" />
@@ -206,10 +212,12 @@ interface ListViewProps {
   onDeleteFile?: (id: string) => void;
   onRenameFolder?: (id: string) => void;
   onRenameFile?: (id: string) => void;
+  onShareFolder?: (id: string) => void;
+  onShareFile?: (id: string) => void;
 }
 
 export const ListView = ({
-  folders, files, selectedId, onSelect, onFolderOpen, onOpenFile, onDeleteFolder, onDeleteFile, onRenameFolder, onRenameFile
+  folders, files, selectedId, onSelect, onFolderOpen, onOpenFile, onDeleteFolder, onDeleteFile, onRenameFolder, onRenameFile, onShareFolder, onShareFile
 }: ListViewProps) => {
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
@@ -271,6 +279,7 @@ export const ListView = ({
               }
               onDelete={item.isFolder ? () => onDeleteFolder?.(item._id) : () => onDeleteFile?.(item._id)}
               onRename={item.isFolder ? () => onRenameFolder?.(item._id) : () => onRenameFile?.(item._id)}
+              onShare={item.isFolder ? () => onShareFolder?.(item._id) : () => onShareFile?.(item._id)}
             />
           ))}
         </tbody>

@@ -7,6 +7,9 @@ export interface IFolder extends Document {
   isFavorite: boolean;
   isDeleted: boolean;
   tags: string[];
+  isShared: boolean;
+  shareId: string | null;
+  shareExpiresAt: Date | null;
 }
 
 const FolderSchema: Schema = new Schema({
@@ -16,6 +19,9 @@ const FolderSchema: Schema = new Schema({
   isFavorite: { type: Boolean, default: false },
   isDeleted: { type: Boolean, default: false },
   tags: { type: [String], default: [] },
+  isShared: { type: Boolean, default: false },
+  shareId: { type: String, default: null },
+  shareExpiresAt: { type: Date, default: null },
 });
 
 export default mongoose.model<IFolder>('Folder', FolderSchema);

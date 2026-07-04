@@ -10,6 +10,9 @@ export interface IFile extends Document {
   isDeleted: boolean;
   tags: string[];
   filename: string;
+  isShared: boolean;
+  shareId: string | null;
+  shareExpiresAt: Date | null;
 }
 
 const FileSchema: Schema = new Schema({
@@ -22,6 +25,9 @@ const FileSchema: Schema = new Schema({
   isDeleted: { type: Boolean, default: false },
   tags: { type: [String], default: [] },
   filename: { type: String, required: true },
+  isShared: { type: Boolean, default: false },
+  shareId: { type: String, default: null },
+  shareExpiresAt: { type: Date, default: null },
 });
 
 export default mongoose.model<IFile>('File', FileSchema);

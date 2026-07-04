@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import File from '../models/File';
 import fs from 'fs';
+import crypto from 'crypto';
 
 const router = Router();
 
@@ -198,6 +199,48 @@ router.delete('/:id', async (req: Request, res: Response) => {
     res.json({ message: 'File permanently deleted' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete file' });
+  }
+});
+
+// Enable sharing or update sharing details
+router.put('/:id/share', async (req: Request, res: Response) => {
+  try {
+    const { expiresInHours } = req.body;
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ error: 'File not found' });
+
+    file.isShared = true;
+    if (!file.shareId) {
+      file.shareId = crypto.randomBytes(8).toString('hex');
+    }
+
+    if (expiresInHours && expiresInHours > 0) {
+      file.shareExpiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+    } else {
+      file.shareExpiresAt = null;
+    }
+
+    await file.save();
+    res.json(file);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to share file' });
+  }
+});
+
+// Disable sharing
+router.delete('/:id/share', async (req: Request, res: Response) => {
+  try {
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ error: 'File not found' });
+
+    file.isShared = false;
+    file.shareId = null;
+    file.shareExpiresAt = null;
+
+    await file.save();
+    res.json(file);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to disable file sharing' });
   }
 });
 

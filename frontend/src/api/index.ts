@@ -109,3 +109,39 @@ export const renameFile = async (id: string, name: string) => {
   if (!res.ok) throw new Error('Failed to rename file');
   return res.json();
 };
+
+export const shareItem = async (id: string, type: 'folder' | 'file', expiresInHours?: number) => {
+  const res = await fetch(`${API_URL}/${type === 'folder' ? 'folders' : 'files'}/${id}/share`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ expiresInHours }),
+  });
+  if (!res.ok) throw new Error('Failed to share item');
+  return res.json();
+};
+
+export const unshareItem = async (id: string, type: 'folder' | 'file') => {
+  const res = await fetch(`${API_URL}/${type === 'folder' ? 'folders' : 'files'}/${id}/share`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to unshare item');
+  return res.json();
+};
+
+export const fetchSharedItem = async (type: string, shareId: string) => {
+  const res = await fetch(`${API_URL}/share/${type}/${shareId}`);
+  if (!res.ok) throw new Error('Failed to fetch shared item');
+  return res.json();
+};
+
+export const fetchSharedSubfolder = async (folderId: string) => {
+  const res = await fetch(`${API_URL}/share/folder/node/${folderId}`);
+  if (!res.ok) throw new Error('Failed to fetch shared subfolder contents');
+  return res.json();
+};
+
+export const fetchSharedFile = async (fileId: string) => {
+  const res = await fetch(`${API_URL}/share/file/node/${fileId}`);
+  if (!res.ok) throw new Error('Failed to fetch shared file contents');
+  return res.json();
+};

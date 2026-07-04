@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchFolders, fetchFiles, createFolder, uploadFile, deleteFolder, deleteFile, renameFolder, renameFile } from '../../api';
+import { fetchFolders, fetchFiles, createFolder, uploadFile, deleteFolder, deleteFile, renameFolder, renameFile, shareItem, unshareItem } from '../../api';
 import { FolderCard } from '../FolderCard';
 import { FileCard } from '../FileCard';
 import { ListView } from '../ListView';
@@ -8,6 +8,7 @@ import { PreviewPanel } from '../PreviewPanel';
 import { MarkdownPreviewModal } from '../MarkdownPreviewModal';
 import StatusBar from './StatusBar';
 import RenameModal from './RenameModal';
+import ShareModal from './ShareModal';
 import { FolderPlus, Upload, FolderOpen } from 'lucide-react';
 
 interface MainContentProps {
@@ -196,6 +197,42 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
     }
   });
 
+  const [shareItemTarget, setShareItemTarget] = useState<{ _id: string; name: string; type: 'folder' | 'file'; isShared?: boolean; shareId?: string | null; shareExpiresAt?: string | null } | null>(null);
+
+  const shareItemMutation = useMutation({
+    mutationFn: ({ id, type, expiresInHours }: { id: string; type: 'folder' | 'file'; expiresInHours?: number }) => shareItem(id, type, expiresInHours),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['folders'] });
+      qc.invalidateQueries({ queryKey: ['files'] });
+      setShareItemTarget((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          isShared: data.isShared,
+          shareId: data.shareId,
+          shareExpiresAt: data.shareExpiresAt
+        };
+      });
+    }
+  });
+
+  const unshareItemMutation = useMutation({
+    mutationFn: ({ id, type }: { id: string; type: 'folder' | 'file' }) => unshareItem(id, type),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['folders'] });
+      qc.invalidateQueries({ queryKey: ['files'] });
+      setShareItemTarget((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          isShared: data.isShared,
+          shareId: data.shareId,
+          shareExpiresAt: data.shareExpiresAt
+        };
+      });
+    }
+  });
+
   const selectedItem =
     folders.find((f: any) => f._id === selectedId) ||
     files.find((f: any) => f._id === selectedId);
@@ -257,6 +294,7 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
                       onDoubleClick={() => onFolderOpen?.(folder._id, folder.name)}
                       onDelete={() => deleteFolderMutation.mutate(folder._id)}
                       onRename={() => setRenameItem({ _id: folder._id, name: folder.name, type: 'folder' })}
+                      onShare={() => setShareItemTarget({ _id: folder._id, name: folder.name, type: 'folder', isShared: folder.isShared, shareId: folder.shareId, shareExpiresAt: folder.shareExpiresAt })}
                     />
                   ))}
                   {files.map((file: any) => (
@@ -268,6 +306,7 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
                       onDoubleClick={() => handleOpenFile(file)}
                       onDelete={() => deleteFileMutation.mutate(file._id)}
                       onRename={() => setRenameItem({ _id: file._id, name: file.name, type: 'file' })}
+                      onShare={() => setShareItemTarget({ _id: file._id, name: file.name, type: 'file', isShared: file.isShared, shareId: file.shareId, shareExpiresAt: file.shareExpiresAt })}
                     />
                   ))}
                 </div>
@@ -288,6 +327,14 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
                   onRenameFile={(id) => {
                     const f = files.find((fil: any) => fil._id === id);
                     if (f) setRenameItem({ _id: id, name: f.name, type: 'file' });
+                  }}
+                  onShareFolder={(id) => {
+                    const f = folders.find((fol: any) => fol._id === id);
+                    if (f) setShareItemTarget({ _id: id, name: f.name, type: 'folder', isShared: f.isShared, shareId: f.shareId, shareExpiresAt: f.shareExpiresAt });
+                  }}
+                  onShareFile={(id) => {
+                    const f = files.find((fil: any) => fil._id === id);
+                    if (f) setShareItemTarget({ _id: id, name: f.name, type: 'file', isShared: f.isShared, shareId: f.shareId, shareExpiresAt: f.shareExpiresAt });
                   }}
                 />
               )
@@ -339,6 +386,22 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
             }
           }}
           isPending={renameFolderMutation.isPending || renameFileMutation.isPending}
+        />
+      )}
+
+      {shareItemTarget && (
+        <ShareModal
+          open={!!shareItemTarget}
+          onClose={() => setShareItemTarget(null)}
+          item={shareItemTarget}
+          type={shareItemTarget.type}
+          onShare={(expiresInHours) => {
+            shareItemMutation.mutate({ id: shareItemTarget._id, type: shareItemTarget.type, expiresInHours });
+          }}
+          onUnshare={() => {
+            unshareItemMutation.mutate({ id: shareItemTarget._id, type: shareItemTarget.type });
+          }}
+          isPending={shareItemMutation.isPending || unshareItemMutation.isPending}
         />
       )}
     </>

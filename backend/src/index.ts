@@ -6,6 +6,7 @@ import path from 'path';
 import folderRoutes from './routes/folderRoutes';
 import fileRoutes from './routes/fileRoutes';
 import storageRoutes from './routes/storageRoutes';
+import shareRoutes from './routes/shareRoutes';
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ mongoose.connect(MONGO_URI)
 app.use('/api/folders', folderRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/storage', storageRoutes);
+app.use('/api/share', shareRoutes);
 
 app.get('/', (req, res) => {
   res.send('DocVault API is running');

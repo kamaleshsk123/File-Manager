@@ -7,15 +7,17 @@ interface FolderCardProps {
     _id: string;
     name: string;
     createdAt: string;
+    isShared?: boolean;
   };
   onDoubleClick?: () => void;
   selected?: boolean;
   onSelect?: () => void;
   onDelete?: () => void;
   onRename?: () => void;
+  onShare?: () => void;
 }
 
-export const FolderCard = ({ folder, onDoubleClick, selected, onSelect, onDelete, onRename }: FolderCardProps) => {
+export const FolderCard = ({ folder, onDoubleClick, selected, onSelect, onDelete, onRename, onShare }: FolderCardProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -53,7 +55,12 @@ export const FolderCard = ({ folder, onDoubleClick, selected, onSelect, onDelete
             >
               <PenLine className="h-3 w-3" />Rename
             </button>
-            <button className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"><Share2 className="h-3 w-3" />Share</button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onShare?.(); }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+            >
+              <Share2 className="h-3 w-3" />Share
+            </button>
             <div className="h-px bg-border my-1" />
             <button 
               onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete?.(); }}
@@ -80,9 +87,12 @@ export const FolderCard = ({ folder, onDoubleClick, selected, onSelect, onDelete
       </div>
 
       {/* Name */}
-      <p className="w-full text-center text-[13px] font-medium text-foreground truncate leading-tight" title={folder.name}>
-        {folder.name}
-      </p>
+      <div className="flex items-center justify-center gap-1 w-full max-w-full px-1">
+        {folder.isShared && <Share2 className="h-3 w-3 text-primary shrink-0" />}
+        <p className="text-[13px] font-medium text-foreground truncate leading-tight" title={folder.name}>
+          {folder.name}
+        </p>
+      </div>
       <p className="mt-0.5 text-[11px] text-muted-foreground">
         {new Date(folder.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
       </p>

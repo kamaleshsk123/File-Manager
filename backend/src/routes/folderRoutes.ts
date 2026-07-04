@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import Folder from '../models/Folder';
+import crypto from 'crypto';
 
 const router = Router();
 
@@ -137,6 +138,48 @@ router.delete('/:id', async (req: Request, res: Response) => {
     res.json({ message: 'Folder permanently deleted' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete folder' });
+  }
+});
+
+// Enable sharing or update sharing details
+router.put('/:id/share', async (req: Request, res: Response) => {
+  try {
+    const { expiresInHours } = req.body;
+    const folder = await Folder.findById(req.params.id);
+    if (!folder) return res.status(404).json({ error: 'Folder not found' });
+
+    folder.isShared = true;
+    if (!folder.shareId) {
+      folder.shareId = crypto.randomBytes(8).toString('hex');
+    }
+
+    if (expiresInHours && expiresInHours > 0) {
+      folder.shareExpiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+    } else {
+      folder.shareExpiresAt = null;
+    }
+
+    await folder.save();
+    res.json(folder);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to share folder' });
+  }
+});
+
+// Disable sharing
+router.delete('/:id/share', async (req: Request, res: Response) => {
+  try {
+    const folder = await Folder.findById(req.params.id);
+    if (!folder) return res.status(404).json({ error: 'Folder not found' });
+
+    folder.isShared = false;
+    folder.shareId = null;
+    folder.shareExpiresAt = null;
+
+    await folder.save();
+    res.json(folder);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to disable folder sharing' });
   }
 });
 
