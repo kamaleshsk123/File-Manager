@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import {
   FolderPlus, Upload, RefreshCw, Trash2, PenLine,
-  LayoutGrid, List, ArrowUpDown, MoreHorizontal,
-  Copy, Scissors, ClipboardPaste
+  LayoutGrid, List, Copy, Scissors, ClipboardPaste,
+  Share2, ChevronDown, MoreHorizontal, SortAsc
 } from 'lucide-react';
 
 interface ToolbarProps {
@@ -13,81 +13,97 @@ interface ToolbarProps {
   selectedCount?: number;
 }
 
+// Separator between button groups
+const Sep = () => (
+  <div className="w-px h-6 bg-border mx-0.5 shrink-0" />
+);
+
+// Windows 11 flat command bar button
+const CmdBtn = ({
+  icon,
+  label,
+  onClick,
+  disabled = false,
+  danger = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+}) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 min-w-[44px] h-full rounded transition-colors duration-75 select-none
+      ${danger
+        ? 'text-red-600 hover:bg-red-50 disabled:opacity-30 disabled:hover:bg-transparent'
+        : 'text-foreground hover:bg-[#E5E5E5] disabled:opacity-30 disabled:hover:bg-transparent'
+      } disabled:cursor-not-allowed`}
+  >
+    <span className="flex items-center justify-center">{icon}</span>
+    <span className="text-[10.5px] leading-none whitespace-nowrap">{label}</span>
+  </button>
+);
+
 const Toolbar = ({ onUpload, onNewFolder, view, onViewChange, selectedCount = 0 }: ToolbarProps) => {
   const [sortOpen, setSortOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
 
   return (
-    <div className="flex items-center gap-1 border-b border-border bg-[hsl(var(--toolbar-bg))] px-4 py-1.5 shrink-0 z-10">
-      {/* Primary actions */}
-      <button
+    <div className="flex items-stretch h-[52px] border-b border-border bg-[#F3F3F3] px-1 shrink-0 z-10">
+
+      {/* Group 1: New / Upload */}
+      <CmdBtn
+        icon={<FolderPlus className="h-4 w-4 text-[#FFB900]" />}
+        label="New folder"
         onClick={onNewFolder}
-        className="flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium text-foreground hover:bg-muted transition-colors"
-      >
-        <FolderPlus className="h-3.5 w-3.5 text-primary" />
-        New Folder
-      </button>
-      <button
+      />
+      <CmdBtn
+        icon={<Upload className="h-4 w-4 text-primary" />}
+        label="Upload"
         onClick={onUpload}
-        className="flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium text-foreground hover:bg-muted transition-colors"
-      >
-        <Upload className="h-3.5 w-3.5 text-primary" />
-        Upload
-      </button>
+      />
 
-      <div className="w-px h-4 bg-border mx-1" />
+      <Sep />
 
-      {/* Selection actions — only show when selected */}
-      <button
-        disabled={selectedCount === 0}
-        className="flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-      >
-        <Copy className="h-3.5 w-3.5" />
-        Copy
-      </button>
-      <button
-        disabled={selectedCount === 0}
-        className="flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-      >
-        <Scissors className="h-3.5 w-3.5" />
-        Cut
-      </button>
-      <button
-        disabled={selectedCount === 0}
-        className="flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-      >
-        <PenLine className="h-3.5 w-3.5" />
-        Rename
-      </button>
-      <button
-        disabled={selectedCount === 0}
-        className="flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-        Delete
-      </button>
+      {/* Group 2: Clipboard */}
+      <CmdBtn icon={<Scissors className="h-4 w-4" />} label="Cut" disabled={selectedCount === 0} />
+      <CmdBtn icon={<Copy className="h-4 w-4" />} label="Copy" disabled={selectedCount === 0} />
+      <CmdBtn icon={<ClipboardPaste className="h-4 w-4" />} label="Paste" disabled />
 
-      <div className="w-px h-4 bg-border mx-1" />
+      <Sep />
 
-      <button className="flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium text-foreground hover:bg-muted transition-colors">
-        <RefreshCw className="h-3.5 w-3.5" />
-        Refresh
-      </button>
+      {/* Group 3: Item actions */}
+      <CmdBtn icon={<PenLine className="h-4 w-4" />} label="Rename" disabled={selectedCount === 0} />
+      <CmdBtn icon={<Share2 className="h-4 w-4" />} label="Share" disabled={selectedCount === 0} />
+      <CmdBtn icon={<Trash2 className="h-4 w-4" />} label="Delete" disabled={selectedCount === 0} danger />
 
+      <Sep />
+
+      {/* Group 4: Refresh */}
+      <CmdBtn icon={<RefreshCw className="h-4 w-4" />} label="Refresh" />
+
+      {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Sort */}
-      <div className="relative">
+      {/* Sort dropdown */}
+      <div className="relative flex items-center">
         <button
-          onClick={() => setSortOpen(v => !v)}
-          className="flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-medium text-foreground hover:bg-muted transition-colors border border-transparent hover:border-border"
+          onClick={() => { setSortOpen(v => !v); setViewOpen(false); }}
+          className="flex flex-col items-center gap-0.5 px-2.5 py-1 h-full rounded hover:bg-[#E5E5E5] transition-colors"
         >
-          <ArrowUpDown className="h-3.5 w-3.5" />
-          Sort
+          <SortAsc className="h-4 w-4 text-foreground" />
+          <span className="text-[10.5px]">Sort</span>
         </button>
         {sortOpen && (
-          <div className="absolute right-0 top-9 z-50 w-40 rounded-xl border border-border bg-card shadow-card animate-scale-in overflow-hidden">
+          <div className="absolute right-0 top-full mt-0.5 z-50 w-44 bg-popover border border-border rounded-lg shadow-win-menu animate-scale-in overflow-hidden py-1">
             {['Name', 'Date modified', 'Size', 'Type'].map(o => (
-              <button key={o} className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors">
+              <button
+                key={o}
+                onClick={() => setSortOpen(false)}
+                className="w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#E5E5E5] transition-colors"
+              >
                 {o}
               </button>
             ))}
@@ -96,20 +112,41 @@ const Toolbar = ({ onUpload, onNewFolder, view, onViewChange, selectedCount = 0 
       </div>
 
       {/* View toggle */}
-      <div className="flex items-center rounded-md border border-border p-0.5 bg-muted/50">
+      <div className="relative flex items-center">
         <button
-          onClick={() => onViewChange('grid')}
-          className={`flex h-5.5 w-5.5 items-center justify-center rounded transition-all p-1 ${view === 'grid' ? 'bg-background shadow-soft text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+          onClick={() => { setViewOpen(v => !v); setSortOpen(false); }}
+          className="flex flex-col items-center gap-0.5 px-2.5 py-1 h-full rounded hover:bg-[#E5E5E5] transition-colors"
         >
-          <LayoutGrid className="h-3.5 w-3.5" />
+          {view === 'grid'
+            ? <LayoutGrid className="h-4 w-4 text-foreground" />
+            : <List className="h-4 w-4 text-foreground" />
+          }
+          <span className="text-[10.5px]">View</span>
         </button>
-        <button
-          onClick={() => onViewChange('list')}
-          className={`flex h-5.5 w-5.5 items-center justify-center rounded transition-all p-1 ${view === 'list' ? 'bg-background shadow-soft text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          <List className="h-3.5 w-3.5" />
-        </button>
+        {viewOpen && (
+          <div className="absolute right-0 top-full mt-0.5 z-50 w-40 bg-popover border border-border rounded-lg shadow-win-menu animate-scale-in overflow-hidden py-1">
+            <button
+              onClick={() => { onViewChange('grid'); setViewOpen(false); }}
+              className={`w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-[#E5E5E5] transition-colors
+                ${view === 'grid' ? 'font-semibold text-primary' : ''}`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              Medium icons
+              {view === 'grid' && <span className="ml-auto text-primary">✓</span>}
+            </button>
+            <button
+              onClick={() => { onViewChange('list'); setViewOpen(false); }}
+              className={`w-full flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-[#E5E5E5] transition-colors
+                ${view === 'list' ? 'font-semibold text-primary' : ''}`}
+            >
+              <List className="h-3.5 w-3.5" />
+              Details
+              {view === 'list' && <span className="ml-auto text-primary">✓</span>}
+            </button>
+          </div>
+        )}
       </div>
+
     </div>
   );
 };

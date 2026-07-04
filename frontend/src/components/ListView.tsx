@@ -28,19 +28,24 @@ const getExtension = (name: string) => name.split('.').pop()?.toUpperCase() || '
 interface TypeInfo { label: string; color: string; bg: string; icon: React.ReactNode }
 
 const getTypeInfo = (item: ListItem): TypeInfo => {
-  if (item.isFolder) return { label: 'FOLDER', color: 'text-amber-700', bg: 'bg-amber-100', icon: <Folder className="h-4 w-4 text-amber-500" fill="currentColor" fillOpacity={0.2} /> };
+  if (item.isFolder) return { label: 'Folder', color: 'text-amber-700', bg: 'bg-amber-50', icon: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M2 5H14V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V5Z" fill="#FFC83D"/>
+      <path d="M1 4C1 3.44 1.44 3 2 3H6.17C6.43 3 6.69 3.1 6.87 3.29L7.62 4.04C7.8 4.22 8.06 4.33 8.32 4.33H13C13.55 4.33 14 4.77 14 5.33V5H2V4Z" fill="#FFB900"/>
+    </svg>
+  )};
   const t = item.type || '';
   const ext = getExtension(item.name);
-  if (t.startsWith('image/'))  return { label: ext, color: 'text-sky-700',     bg: 'bg-sky-100',     icon: <ImageIcon className="h-4 w-4 text-sky-500" /> };
-  if (t.startsWith('video/'))  return { label: ext, color: 'text-violet-700',  bg: 'bg-violet-100',  icon: <Film className="h-4 w-4 text-violet-500" /> };
-  if (t.startsWith('audio/'))  return { label: ext, color: 'text-yellow-700',  bg: 'bg-yellow-100',  icon: <Music className="h-4 w-4 text-yellow-500" /> };
-  if (t.includes('pdf') || ext === 'PDF')  return { label: 'PDF', color: 'text-red-700', bg: 'bg-red-100', icon: <FileText className="h-4 w-4 text-red-500" /> };
-  if (['DOC','DOCX','TXT','RTF'].includes(ext)) return { label: ext, color: 'text-blue-700', bg: 'bg-blue-100', icon: <FileText className="h-4 w-4 text-blue-500" /> };
-  if (['MD'].includes(ext))    return { label: 'MARKDOWN', color: 'text-indigo-700', bg: 'bg-indigo-100', icon: <FileText className="h-4 w-4 text-indigo-500" /> };
-  if (['ZIP','TAR','GZ','RAR'].includes(ext)) return { label: ext, color: 'text-orange-700', bg: 'bg-orange-100', icon: <Archive className="h-4 w-4 text-orange-500" /> };
+  if (t.startsWith('image/'))  return { label: ext, color: 'text-sky-700',     bg: 'bg-sky-50',     icon: <ImageIcon className="h-4 w-4" style={{color:'#0078D4'}} /> };
+  if (t.startsWith('video/'))  return { label: ext, color: 'text-violet-700',  bg: 'bg-violet-50',  icon: <Film className="h-4 w-4" style={{color:'#5C2D91'}} /> };
+  if (t.startsWith('audio/'))  return { label: ext, color: 'text-yellow-700',  bg: 'bg-yellow-50',  icon: <Music className="h-4 w-4" style={{color:'#E81123'}} /> };
+  if (t.includes('pdf') || ext === 'PDF')  return { label: 'PDF Document', color: 'text-red-700', bg: 'bg-red-50', icon: <FileText className="h-4 w-4" style={{color:'#D83B01'}} /> };
+  if (['DOC','DOCX','TXT','RTF'].includes(ext)) return { label: ext + ' Document', color: 'text-blue-700', bg: 'bg-blue-50', icon: <FileText className="h-4 w-4" style={{color:'#0078D4'}} /> };
+  if (['MD'].includes(ext))    return { label: 'Markdown', color: 'text-indigo-700', bg: 'bg-indigo-50', icon: <FileText className="h-4 w-4" style={{color:'#8764B8'}} /> };
+  if (['ZIP','TAR','GZ','RAR'].includes(ext)) return { label: 'Compressed', color: 'text-orange-700', bg: 'bg-orange-50', icon: <Archive className="h-4 w-4" style={{color:'#986F0B'}} /> };
   if (['JS','TS','JSX','TSX','PY','JAVA','CPP','HTML','CSS','JSON'].includes(ext))
-    return { label: ext, color: 'text-emerald-700', bg: 'bg-emerald-100', icon: <Code className="h-4 w-4 text-emerald-500" /> };
-  return { label: ext || 'FILE', color: 'text-slate-600', bg: 'bg-slate-100', icon: <File className="h-4 w-4 text-slate-400" /> };
+    return { label: ext + ' Source', color: 'text-emerald-700', bg: 'bg-emerald-50', icon: <Code className="h-4 w-4" style={{color:'#107C10'}} /> };
+  return { label: ext || 'File', color: 'text-slate-600', bg: 'bg-slate-50', icon: <File className="h-4 w-4 text-slate-400" /> };
 };
 
 const formatSize = (bytes?: number) => {
@@ -92,8 +97,11 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename, 
     <tr
       onClick={onSelect}
       onDoubleClick={onDoubleClick}
-      className={`group relative border-b border-border cursor-pointer select-none transition-colors
-        ${selected ? 'bg-primary/5' : 'hover:bg-muted/50'}
+      className={`group relative border-b border-border cursor-pointer select-none transition-colors duration-75
+        ${selected
+          ? 'bg-[#CCE4F7]'
+          : 'hover:bg-[#E5F3FF]'
+        }
       `}
     >
       {/* Name */}
@@ -129,7 +137,7 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename, 
         <div ref={menuRef} className="relative inline-block">
           <button
             onClick={e => { e.stopPropagation(); setMenuOpen(v => !v); }}
-            className="h-6 w-6 flex items-center justify-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-foreground transition-all"
+            className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-[#D1D1D1] transition-all"
           >
             <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
               <circle cx="10" cy="4" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="10" cy="16" r="1.5"/>
@@ -137,36 +145,40 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename, 
           </button>
           {menuOpen && (
             <div
-              className="absolute right-0 top-7 z-50 w-36 rounded-xl border border-border bg-card shadow-card animate-scale-in overflow-hidden"
+              className="absolute right-0 top-7 z-50 win-context-menu animate-scale-in"
               onClick={e => e.stopPropagation()}
             >
               {!item.isFolder && (
-                <button
-                  onClick={() => window.open(`http://localhost:5000/api/files/download/${item._id}`)}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+                <div
+                  className="win-context-menu-item"
+                  onClick={() => { setMenuOpen(false); window.open(`http://localhost:5000/api/files/download/${item._id}`); }}
                 >
-                  <Download className="h-3 w-3" />Download
-                </button>
+                  <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                  Download
+                </div>
               )}
-              <button
-                onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onRename?.(); }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+              <div
+                className="win-context-menu-item"
+                onClick={() => { setMenuOpen(false); onRename?.(); }}
               >
-                <PenLine className="h-3 w-3" />Rename
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onShare?.(); }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+                <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+                Rename
+              </div>
+              <div
+                className="win-context-menu-item"
+                onClick={() => { setMenuOpen(false); onShare?.(); }}
               >
-                <Share2 className="h-3 w-3" />Share
-              </button>
-              <div className="h-px bg-border my-1" />
-              <button
+                <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+                Share
+              </div>
+              <div className="win-context-menu-sep" />
+              <div
+                className="win-context-menu-item text-red-600"
                 onClick={() => { setMenuOpen(false); onDelete?.(); }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
               >
-                <Trash2 className="h-3 w-3" />Delete
-              </button>
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
+              </div>
             </div>
           )}
         </div>
@@ -187,11 +199,11 @@ const ColHeader = ({
   return (
     <th
       onClick={() => onSort(sortKey)}
-      className="py-2 px-3 text-left text-xs font-semibold text-muted-foreground cursor-pointer select-none whitespace-nowrap hover:text-foreground transition-colors group"
+      className="py-1.5 px-3 text-left text-[12px] font-semibold text-muted-foreground cursor-pointer select-none whitespace-nowrap hover:bg-[#E5E5E5] transition-colors border-b-2 border-border"
     >
       <div className="flex items-center gap-1">
         {label}
-        <span className={`transition-opacity ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`}>
+        <span className={`transition-opacity ${active ? 'opacity-100 text-primary' : 'opacity-0 group-hover:opacity-40'}`}>
           {active && dir === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         </span>
       </div>

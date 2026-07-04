@@ -31,7 +31,7 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground font-sans">
+    <div className="flex h-screen flex-col overflow-hidden bg-white text-foreground" style={{fontFamily:"'Segoe UI', system-ui, -apple-system, sans-serif"}}>
       <NewFolderModal open={newFolderOpen} onClose={() => setNewFolderOpen(false)} parentId={currentFolderId} />
       <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} folderId={currentFolderId} />
 

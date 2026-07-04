@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Folder, MoreVertical, PenLine, Trash2, Share2 } from 'lucide-react';
+import { Share2, MoreVertical, PenLine, Trash2 } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
 
 interface FolderCardProps {
@@ -17,6 +17,27 @@ interface FolderCardProps {
   onShare?: () => void;
 }
 
+// Windows 11 folder SVG icon
+const WinFolderIcon = ({ size = 48, selected = false }: { size?: number; selected?: boolean }) => (
+  <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+    {/* Tab */}
+    <path
+      d="M4 16C4 13.7909 5.79086 12 8 12H20.4853C21.0177 12 21.5284 12.2107 21.9142 12.5858L24.0858 14.7574C24.4716 15.1425 24.9823 15.3536 25.5147 15.3536H40C42.2091 15.3536 44 17.1445 44 19.3536V35C44 37.2091 42.2091 39 40 39H8C5.79086 39 4 37.2091 4 35V16Z"
+      fill={selected ? '#0078D4' : '#FFB900'}
+    />
+    {/* Body */}
+    <path
+      d="M4 20H44V35C44 37.2091 42.2091 39 40 39H8C5.79086 39 4 37.2091 4 35V20Z"
+      fill={selected ? '#55AAFF' : '#FFC83D'}
+    />
+    {/* Shine */}
+    <path
+      d="M4 20H44V24C44 24 34 28 24 24C14 20 4 24 4 24V20Z"
+      fill="rgba(255,255,255,0.15)"
+    />
+  </svg>
+);
+
 export const FolderCard = ({ folder, onDoubleClick, selected, onSelect, onDelete, onRename, onShare }: FolderCardProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -27,75 +48,68 @@ export const FolderCard = ({ folder, onDoubleClick, selected, onSelect, onDelete
     <div
       onClick={onSelect}
       onDoubleClick={onDoubleClick}
-      className={`group relative flex flex-col items-center p-4 rounded-xl border cursor-pointer card-hover select-none
+      className={`group relative flex flex-col items-center justify-start p-2 pt-3 cursor-pointer select-none rounded transition-colors duration-75
         ${selected
-          ? 'border-primary/50 bg-primary/5 ring-2 ring-primary/20'
-          : 'border-border bg-card hover:border-primary/30 hover:bg-primary/[0.02]'
+          ? 'bg-[#CCE4F7] outline outline-1 outline-[#0078D4]'
+          : 'hover:bg-[#E5F3FF] hover:outline hover:outline-1 hover:outline-[#E5E5E5]'
         }
       `}
     >
-      {/* Context menu wrapper */}
-      <div ref={menuRef} className="absolute top-2 right-2 z-50">
+      {/* Context menu trigger — only on hover */}
+      <div ref={menuRef} className="absolute top-1 right-1 z-20">
         <button
           onClick={e => { e.stopPropagation(); setMenuOpen(v => !v); }}
-          className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground hover:text-foreground"
+          className="h-6 w-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 hover:bg-[#D1D1D1] transition-all text-muted-foreground"
         >
           <MoreVertical className="h-3.5 w-3.5" />
         </button>
 
-        {/* Context menu */}
         {menuOpen && (
           <div
-            className="absolute top-8 right-0 w-36 rounded-xl border border-border bg-card shadow-card animate-scale-in overflow-hidden"
+            className="absolute top-7 right-0 z-50 win-context-menu animate-scale-in"
             onClick={e => e.stopPropagation()}
           >
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onRename?.(); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+            <div
+              className="win-context-menu-item"
+              onClick={() => { setMenuOpen(false); onRename?.(); }}
             >
-              <PenLine className="h-3 w-3" />Rename
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onShare?.(); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+              <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+              Rename
+            </div>
+            <div
+              className="win-context-menu-item"
+              onClick={() => { setMenuOpen(false); onShare?.(); }}
             >
-              <Share2 className="h-3 w-3" />Share
-            </button>
-            <div className="h-px bg-border my-1" />
-            <button 
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete?.(); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+              <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+              Share
+            </div>
+            <div className="win-context-menu-sep" />
+            <div
+              className="win-context-menu-item text-red-600"
+              onClick={() => { setMenuOpen(false); onDelete?.(); }}
             >
-              <Trash2 className="h-3 w-3" />Delete
-            </button>
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </div>
           </div>
         )}
       </div>
 
-      {/* Icon */}
-      <div className="relative mb-3">
-        <div className={`absolute inset-0 rounded-full blur-xl opacity-20 transition-opacity group-hover:opacity-40
-          ${selected ? 'bg-primary' : 'bg-amber-400'}`}
-        />
-        <Folder
-          className={`h-14 w-14 relative icon-folder transition-transform duration-200 group-hover:scale-105
-            ${selected ? 'text-primary' : 'text-amber-400'}`}
-          fill="currentColor"
-          fillOpacity={0.15}
-          strokeWidth={1.5}
-        />
-      </div>
+      {/* Folder icon */}
+      <WinFolderIcon size={48} selected={selected} />
 
       {/* Name */}
-      <div className="flex items-center justify-center gap-1 w-full max-w-full px-1">
-        {folder.isShared && <Share2 className="h-3 w-3 text-primary shrink-0" />}
-        <p className="text-[13px] font-medium text-foreground truncate leading-tight" title={folder.name}>
+      <div className="mt-1.5 flex items-center gap-1 w-full justify-center px-1">
+        {folder.isShared && (
+          <Share2 className="h-2.5 w-2.5 text-primary shrink-0" />
+        )}
+        <p
+          className="text-[12px] text-foreground text-center leading-tight truncate max-w-full"
+          title={folder.name}
+        >
           {folder.name}
         </p>
       </div>
-      <p className="mt-0.5 text-[11px] text-muted-foreground">
-        {new Date(folder.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-      </p>
     </div>
   );
 };

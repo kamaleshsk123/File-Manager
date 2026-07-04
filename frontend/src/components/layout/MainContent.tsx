@@ -33,36 +33,40 @@ const NewFolderModal = ({ open, onClose, parentId }: { open: boolean; onClose: (
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-card p-6 animate-scale-in" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center gap-3 mb-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <FolderPlus className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-foreground">New Folder</h2>
-            <p className="text-xs text-muted-foreground">Enter a name for your folder</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 animate-fade-in" onClick={onClose}>
+      <div className="w-full max-w-sm rounded border border-border bg-white shadow-win-menu p-0 animate-scale-in overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Title bar */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-white">
+          <div className="flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 5H14V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V5Z" fill="#FFC83D"/>
+              <path d="M1 4C1 3.44 1.44 3 2 3H6.17C6.43 3 6.69 3.1 6.87 3.29L7.62 4.04C7.8 4.22 8.06 4.33 8.32 4.33H13C13.55 4.33 14 4.77 14 5.33V5H2V4Z" fill="#FFB900"/>
+            </svg>
+            <h2 className="text-[13px] font-semibold text-foreground">New Folder</h2>
           </div>
         </div>
-        <input
-          autoFocus
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && name.trim() && mutation.mutate()}
-          placeholder="Folder name"
-          className="w-full h-10 rounded-lg border border-border bg-muted/50 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all mb-4"
-        />
-        <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="h-9 px-4 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors">
-            Cancel
-          </button>
-          <button
-            onClick={() => name.trim() && mutation.mutate()}
-            disabled={!name.trim() || mutation.isPending}
-            className="h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-all disabled:opacity-50 shadow-soft"
-          >
-            {mutation.isPending ? 'Creating...' : 'Create'}
-          </button>
+        <div className="px-5 pt-4 pb-5">
+          <p className="text-[12px] text-muted-foreground mb-3">Enter a name for the new folder:</p>
+          <input
+            autoFocus
+            value={name}
+            onChange={e => setName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && name.trim() && mutation.mutate()}
+            placeholder="New folder"
+            className="w-full h-8 rounded border border-border bg-white px-2.5 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 mb-4"
+          />
+          <div className="flex gap-2 justify-end">
+            <button onClick={onClose} className="h-8 px-5 rounded border border-border text-[12px] font-normal text-foreground hover:bg-[#E5E5E5] transition-colors">
+              Cancel
+            </button>
+            <button
+              onClick={() => name.trim() && mutation.mutate()}
+              disabled={!name.trim() || mutation.isPending}
+              className="h-8 px-5 rounded bg-primary text-white text-[12px] font-normal hover:bg-primary/90 transition-all disabled:opacity-50"
+            >
+              {mutation.isPending ? 'Creating...' : 'Create'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

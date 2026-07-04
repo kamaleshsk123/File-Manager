@@ -26,26 +26,25 @@ interface FileCardProps {
 interface FileTypeConfig {
   icon: React.ReactNode;
   color: string;
-  bg: string;
-  label: string;
+  ext: string;
 }
 
 const getFileConfig = (type: string, name: string): FileTypeConfig => {
-  const ext = name.split('.').pop()?.toLowerCase() || '';
+  const ext = name.split('.').pop()?.toUpperCase() || 'FILE';
 
   if (type.startsWith('image/'))
-    return { icon: <ImageIcon className="h-7 w-7" />, color: 'text-sky-500', bg: 'bg-sky-50 border-sky-100', label: 'Image' };
+    return { icon: <ImageIcon className="h-10 w-10" />, color: '#0078D4', ext };
   if (type.startsWith('video/'))
-    return { icon: <Film className="h-7 w-7" />, color: 'text-violet-500', bg: 'bg-violet-50 border-violet-100', label: 'Video' };
+    return { icon: <Film className="h-10 w-10" />, color: '#5C2D91', ext };
   if (type.startsWith('audio/'))
-    return { icon: <Music className="h-7 w-7" />, color: 'text-yellow-500', bg: 'bg-yellow-50 border-yellow-100', label: 'Audio' };
-  if (type.includes('pdf') || type.includes('document') || ['pdf', 'doc', 'docx'].includes(ext))
-    return { icon: <FileText className="h-7 w-7" />, color: 'text-red-500', bg: 'bg-red-50 border-red-100', label: 'Document' };
-  if (['zip', 'tar', 'gz', 'rar'].includes(ext) || type.includes('zip'))
-    return { icon: <Archive className="h-7 w-7" />, color: 'text-orange-500', bg: 'bg-orange-50 border-orange-100', label: 'Archive' };
-  if (['js', 'ts', 'jsx', 'tsx', 'py', 'java', 'cpp', 'html', 'css', 'json'].includes(ext))
-    return { icon: <Code className="h-7 w-7" />, color: 'text-emerald-500', bg: 'bg-emerald-50 border-emerald-100', label: 'Code' };
-  return { icon: <File className="h-7 w-7" />, color: 'text-slate-400', bg: 'bg-slate-50 border-slate-100', label: 'File' };
+    return { icon: <Music className="h-10 w-10" />, color: '#E81123', ext };
+  if (type.includes('pdf') || ['pdf', 'doc', 'docx'].includes(ext.toLowerCase()))
+    return { icon: <FileText className="h-10 w-10" />, color: '#D83B01', ext };
+  if (['zip', 'tar', 'gz', 'rar'].includes(ext.toLowerCase()) || type.includes('zip'))
+    return { icon: <Archive className="h-10 w-10" />, color: '#986F0B', ext };
+  if (['js', 'ts', 'jsx', 'tsx', 'py', 'java', 'cpp', 'html', 'css', 'json'].includes(ext.toLowerCase()))
+    return { icon: <Code className="h-10 w-10" />, color: '#107C10', ext };
+  return { icon: <File className="h-10 w-10" />, color: '#616161', ext };
 };
 
 const formatSize = (bytes: number): string => {
@@ -67,80 +66,87 @@ export const FileCard = ({ file, selected, onSelect, onDoubleClick, onDelete, on
     <div
       onClick={onSelect}
       onDoubleClick={onDoubleClick}
-      className={`group relative flex flex-col items-center p-4 rounded-xl border cursor-pointer card-hover select-none
+      className={`group relative flex flex-col items-center justify-start p-2 pt-3 cursor-pointer select-none rounded transition-colors duration-75
         ${selected
-          ? 'border-primary/50 bg-primary/5 ring-2 ring-primary/20'
-          : 'border-border bg-card hover:border-primary/30 hover:bg-primary/[0.02]'
+          ? 'bg-[#CCE4F7] outline outline-1 outline-[#0078D4]'
+          : 'hover:bg-[#E5F3FF] hover:outline hover:outline-1 hover:outline-[#E5E5E5]'
         }
       `}
     >
-      {/* Context menu wrapper */}
-      <div ref={menuRef} className="absolute top-2 right-2 z-50">
+      {/* Context menu trigger */}
+      <div ref={menuRef} className="absolute top-1 right-1 z-20">
         <button
           onClick={e => { e.stopPropagation(); setMenuOpen(v => !v); }}
-          className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground hover:text-foreground"
+          className="h-6 w-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 hover:bg-[#D1D1D1] transition-all text-muted-foreground"
         >
           <MoreVertical className="h-3.5 w-3.5" />
         </button>
 
-        {/* Context menu */}
         {menuOpen && (
           <div
-            className="absolute top-8 right-0 w-36 rounded-xl border border-border bg-card shadow-card animate-scale-in overflow-hidden"
+            className="absolute top-7 right-0 z-50 win-context-menu animate-scale-in"
             onClick={e => e.stopPropagation()}
           >
-            <button
-              onClick={() => window.open(`http://localhost:5000/api/files/download/${file._id}`)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+            <div
+              className="win-context-menu-item"
+              onClick={() => { setMenuOpen(false); window.open(`http://localhost:5000/api/files/download/${file._id}`); }}
             >
-              <Download className="h-3 w-3" />Download
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onRename?.(); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+              <Download className="h-3.5 w-3.5 text-muted-foreground" />
+              Download
+            </div>
+            <div className="win-context-menu-sep" />
+            <div
+              className="win-context-menu-item"
+              onClick={() => { setMenuOpen(false); onRename?.(); }}
             >
-              <PenLine className="h-3 w-3" />Rename
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onShare?.(); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors"
+              <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+              Rename
+            </div>
+            <div
+              className="win-context-menu-item"
+              onClick={() => { setMenuOpen(false); onShare?.(); }}
             >
-              <Share2 className="h-3 w-3" />Share
-            </button>
-            <div className="h-px bg-border my-1" />
-            <button 
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(false); onDelete?.(); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+              <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+              Share
+            </div>
+            <div className="win-context-menu-sep" />
+            <div
+              className="win-context-menu-item text-red-600"
+              onClick={() => { setMenuOpen(false); onDelete?.(); }}
             >
-              <Trash2 className="h-3 w-3" />Delete
-            </button>
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </div>
           </div>
         )}
       </div>
 
-      {/* Icon box or Image preview */}
-      {file.type.startsWith('image/') && file.filename ? (
-        <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-border overflow-hidden bg-muted transition-transform duration-200 group-hover:scale-105">
-          <img
-            src={`http://localhost:5000/uploads/${file.filename}`}
-            alt={file.name}
-            className="h-full w-full object-cover"
-          />
-        </div>
-      ) : (
-        <div className={`mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border-2 ${cfg.bg} ${cfg.color} transition-transform duration-200 group-hover:scale-105`}>
-          {cfg.icon}
-        </div>
-      )}
+      {/* File type icon */}
+      <div
+        className="flex items-center justify-center w-12 h-12 relative"
+        style={{ color: cfg.color }}
+      >
+        {cfg.icon}
+        {/* File type badge */}
+        <span
+          className="absolute -bottom-0.5 -right-0.5 text-[8px] font-bold px-0.5 rounded"
+          style={{ background: cfg.color, color: 'white' }}
+        >
+          {cfg.ext}
+        </span>
+      </div>
 
-      {/* Name */}
-      <div className="flex items-center justify-center gap-1 w-full max-w-full px-1">
-        {file.isShared && <Share2 className="h-3 w-3 text-primary shrink-0" />}
-        <p className="text-[13px] font-medium text-foreground truncate leading-tight" title={file.name}>
+      {/* Name + size */}
+      <div className="mt-1.5 flex items-center gap-1 w-full justify-center px-1">
+        {file.isShared && <Share2 className="h-2.5 w-2.5 text-primary shrink-0" />}
+        <p
+          className="text-[12px] text-foreground text-center leading-tight truncate max-w-full"
+          title={file.name}
+        >
           {file.name}
         </p>
       </div>
-      <p className="mt-0.5 text-[11px] text-muted-foreground">{formatSize(file.size)}</p>
+      <p className="text-[10.5px] text-muted-foreground mt-0.5">{formatSize(file.size)}</p>
     </div>
   );
 };
