@@ -5,6 +5,7 @@ import {
   ChevronUp, ChevronDown
 } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { API_URL } from '../api';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -84,7 +85,7 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename, 
   const iconElement = isImage ? (
     <div className="h-5 w-5 rounded overflow-hidden border border-border bg-muted flex items-center justify-center">
       <img
-        src={`http://localhost:5000/uploads/${item.filename}`}
+        src={`${API_URL}/files/download/${item._id}`}
         alt={item.name}
         className="h-full w-full object-cover"
       />
@@ -151,7 +152,7 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename, 
               {!item.isFolder && (
                 <div
                   className="win-context-menu-item"
-                  onClick={() => { setMenuOpen(false); window.open(`http://localhost:5000/api/files/download/${item._id}`); }}
+                  onClick={() => { setMenuOpen(false); window.open(`${API_URL}/files/download/${item._id}`); }}
                 >
                   <Download className="h-3.5 w-3.5 text-muted-foreground" />
                   Download

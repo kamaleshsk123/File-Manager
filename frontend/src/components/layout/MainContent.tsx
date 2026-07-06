@@ -582,7 +582,7 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, onViewChange,
           }}
           fileName={previewFile.name}
           fileId={previewFile._id}
-          fileUrl={`http://localhost:5000/uploads/${previewFile.filename}`}
+          fileUrl={`${API_URL}/files/download/${previewFile._id}`}
         />
       )}
 
