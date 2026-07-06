@@ -91,7 +91,17 @@ export const FileCard = ({ file, selected, onSelect, onDoubleClick, onDelete, on
           >
             <div
               className="win-context-menu-item"
-              onClick={() => { setMenuOpen(false); window.open(`${API_URL}/${file.isFolder ? 'folders' : 'files'}/download/${file._id}`); }}
+              onClick={() => {
+                setMenuOpen(false);
+                if (file.isFolder) {
+                  window.open(`${API_URL}/folders/download/${file._id}`);
+                } else {
+                  const a = document.createElement('a');
+                  a.href = `${API_URL}/files/download/${file._id}?attachment=1`;
+                  a.download = file.name;
+                  a.click();
+                }
+              }}
             >
               <Download className="h-3.5 w-3.5 text-muted-foreground" />
               Download

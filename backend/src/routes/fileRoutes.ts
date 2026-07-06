@@ -92,8 +92,9 @@ router.get('/download/:id', async (req: Request, res: Response) => {
     const file = await File.findById(req.params.id);
     if (!file) return res.status(404).json({ error: 'File not found' });
 
-    res.set('Content-Type', file.type);
-    res.set('Content-Disposition', `inline; filename="${file.name}"`);
+    const forceDownload = req.query.attachment === '1';
+    res.set('Content-Type', file.type || 'application/octet-stream');
+    res.set('Content-Disposition', `${forceDownload ? 'attachment' : 'inline'}; filename="${file.name}"`);
 
     if (ObjectId.isValid(file.filename)) {
         // GridFS File
@@ -106,10 +107,6 @@ router.get('/download/:id', async (req: Request, res: Response) => {
         downloadStream.on('error', () => {
             res.status(404).json({ error: 'Physical file not found in GridFS' });
         });
-
-        // Set headers so the browser can preview it properly
-        res.set('Content-Type', file.type || 'application/octet-stream');
-        res.set('Content-Disposition', `inline; filename="${file.name}"`);
 
         downloadStream.pipe(res);
     } else {
