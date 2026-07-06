@@ -4,7 +4,7 @@ import {
   Code, File, MoreVertical, PenLine, Trash2, Share2, Download
 } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
-import { API_URL } from '../api';
+import { API_URL, downloadFile } from '../api';
 
 interface FileCardProps {
   file: {
@@ -96,10 +96,7 @@ export const FileCard = ({ file, selected, onSelect, onDoubleClick, onDelete, on
                 if (file.isFolder) {
                   window.open(`${API_URL}/folders/download/${file._id}`);
                 } else {
-                  const a = document.createElement('a');
-                  a.href = `${API_URL}/files/download/${file._id}?attachment=1`;
-                  a.download = file.name;
-                  a.click();
+                  downloadFile(file._id, file.name).catch(() => alert('Download failed'));
                 }
               }}
             >

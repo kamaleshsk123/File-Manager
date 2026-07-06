@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { marked } from 'marked';
 import { X, FileText, Download, Copy, Check } from 'lucide-react';
-import { API_URL } from '../api';
+import { API_URL, downloadFile } from '../api';
 
 interface MarkdownPreviewModalProps {
   open: boolean;
@@ -89,7 +89,7 @@ export const MarkdownPreviewModal = ({ open, onClose, fileName, fileId, fileUrl 
               )}
             </button>
             <button
-              onClick={() => window.open(`${API_URL}/files/download/${fileId}`)}
+              onClick={() => downloadFile(fileId, fileName).catch(() => alert('Download failed'))}
               className="h-8 px-3 rounded-lg bg-primary text-white text-xs font-semibold flex items-center gap-1.5 hover:bg-primary/90 transition-all shadow-soft"
             >
               <Download className="h-3.5 w-3.5" /> Download
