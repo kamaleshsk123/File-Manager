@@ -183,4 +183,42 @@ router.delete('/:id/share', async (req: Request, res: Response) => {
   }
 });
 
+// Move folder
+router.put('/:id/move', async (req: Request, res: Response) => {
+  try {
+    const { targetFolderId } = req.body;
+    const folder = await Folder.findById(req.params.id);
+    if (!folder) return res.status(404).json({ error: 'Folder not found' });
+    
+    if (targetFolderId === folder._id.toString()) {
+        return res.status(400).json({ error: 'Cannot move folder into itself' });
+    }
+
+    folder.parentFolderId = targetFolderId === 'null' || !targetFolderId ? null : targetFolderId;
+    await folder.save();
+    res.json(folder);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to move folder' });
+  }
+});
+
+// Copy folder (shallow)
+router.post('/:id/copy', async (req: Request, res: Response) => {
+  try {
+    const { targetFolderId } = req.body;
+    const folder = await Folder.findById(req.params.id);
+    if (!folder) return res.status(404).json({ error: 'Folder not found' });
+
+    const newFolder = new Folder({
+      name: `Copy of ${folder.name}`,
+      parentFolderId: targetFolderId === 'null' || !targetFolderId ? null : targetFolderId,
+    });
+
+    await newFolder.save();
+    res.status(201).json(newFolder);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to copy folder' });
+  }
+});
+
 export default router;

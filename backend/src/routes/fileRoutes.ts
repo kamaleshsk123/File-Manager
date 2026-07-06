@@ -267,4 +267,50 @@ router.delete('/:id/share', async (req: Request, res: Response) => {
   }
 });
 
+// Move file
+router.put('/:id/move', async (req: Request, res: Response) => {
+  try {
+    const { targetFolderId } = req.body;
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ error: 'File not found' });
+
+    file.folderId = targetFolderId === 'null' || !targetFolderId ? null : targetFolderId;
+    await file.save();
+    res.json(file);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to move file' });
+  }
+});
+
+// Copy file
+router.post('/:id/copy', async (req: Request, res: Response) => {
+  try {
+    const { targetFolderId } = req.body;
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ error: 'File not found' });
+
+    // Copy physical file
+    const newFilename = `${Date.now()}-copy-${file.name}`;
+    const srcPath = path.join(uploadDir, file.filename);
+    const destPath = path.join(uploadDir, newFilename);
+
+    if (fs.existsSync(srcPath)) {
+      fs.copyFileSync(srcPath, destPath);
+    }
+
+    const newFile = new File({
+      name: `Copy of ${file.name}`,
+      folderId: targetFolderId === 'null' || !targetFolderId ? null : targetFolderId,
+      size: file.size,
+      type: file.type,
+      filename: fs.existsSync(srcPath) ? newFilename : file.filename,
+    });
+
+    await newFile.save();
+    res.status(201).json(newFile);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to copy file' });
+  }
+});
+
 export default router;

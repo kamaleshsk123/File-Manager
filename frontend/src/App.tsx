@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
-import Toolbar from './components/layout/Toolbar';
+
 import Breadcrumb from './components/layout/Breadcrumb';
 import MainContent from './components/layout/MainContent';
 import { NewFolderModal, UploadModal } from './components/layout/MainContent';
@@ -44,18 +44,15 @@ function App() {
         <Sidebar active={activeTab} onChange={setActiveTab} />
 
         <div className="flex flex-1 flex-col overflow-hidden">
-          <Toolbar
-            view={view}
-            onViewChange={setView}
-            onUpload={() => setUploadOpen(true)}
-            onNewFolder={() => setNewFolderOpen(true)}
-          />
           <Breadcrumb path={breadcrumbPath} onNavigate={handleNavigate} />
           <MainContent
             currentFolderId={currentFolderId}
             onFolderOpen={handleFolderOpen}
             view={view}
+            onViewChange={setView}
             activeTab={activeTab}
+            onUpload={() => setUploadOpen(true)}
+            onNewFolder={() => setNewFolderOpen(true)}
           />
         </div>
       </div>

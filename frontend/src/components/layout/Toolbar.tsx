@@ -11,6 +11,13 @@ interface ToolbarProps {
   view: 'grid' | 'list';
   onViewChange: (v: 'grid' | 'list') => void;
   selectedCount?: number;
+  onCut?: () => void;
+  onCopy?: () => void;
+  onPaste?: () => void;
+  canPaste?: boolean;
+  onRename?: () => void;
+  onDelete?: () => void;
+  onShare?: () => void;
 }
 
 // Separator between button groups
@@ -46,7 +53,11 @@ const CmdBtn = ({
   </button>
 );
 
-const Toolbar = ({ onUpload, onNewFolder, view, onViewChange, selectedCount = 0 }: ToolbarProps) => {
+const Toolbar = ({ 
+  onUpload, onNewFolder, view, onViewChange, selectedCount = 0,
+  onCut, onCopy, onPaste, canPaste = false,
+  onRename, onDelete, onShare 
+}: ToolbarProps) => {
   const [sortOpen, setSortOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
 
@@ -68,21 +79,21 @@ const Toolbar = ({ onUpload, onNewFolder, view, onViewChange, selectedCount = 0 
       <Sep />
 
       {/* Group 2: Clipboard */}
-      <CmdBtn icon={<Scissors className="h-4 w-4" />} label="Cut" disabled={selectedCount === 0} />
-      <CmdBtn icon={<Copy className="h-4 w-4" />} label="Copy" disabled={selectedCount === 0} />
-      <CmdBtn icon={<ClipboardPaste className="h-4 w-4" />} label="Paste" disabled />
+      <CmdBtn icon={<Scissors className="h-4 w-4" />} label="Cut" disabled={selectedCount === 0} onClick={onCut} />
+      <CmdBtn icon={<Copy className="h-4 w-4" />} label="Copy" disabled={selectedCount === 0} onClick={onCopy} />
+      <CmdBtn icon={<ClipboardPaste className="h-4 w-4" />} label="Paste" disabled={!canPaste} onClick={onPaste} />
 
       <Sep />
 
       {/* Group 3: Item actions */}
-      <CmdBtn icon={<PenLine className="h-4 w-4" />} label="Rename" disabled={selectedCount === 0} />
-      <CmdBtn icon={<Share2 className="h-4 w-4" />} label="Share" disabled={selectedCount === 0} />
-      <CmdBtn icon={<Trash2 className="h-4 w-4" />} label="Delete" disabled={selectedCount === 0} danger />
+      <CmdBtn icon={<PenLine className="h-4 w-4" />} label="Rename" disabled={selectedCount === 0} onClick={onRename} />
+      <CmdBtn icon={<Share2 className="h-4 w-4" />} label="Share" disabled={selectedCount === 0} onClick={onShare} />
+      <CmdBtn icon={<Trash2 className="h-4 w-4" />} label="Delete" disabled={selectedCount === 0} danger onClick={onDelete} />
 
       <Sep />
 
       {/* Group 4: Refresh */}
-      <CmdBtn icon={<RefreshCw className="h-4 w-4" />} label="Refresh" />
+      <CmdBtn icon={<RefreshCw className="h-4 w-4" />} label="Refresh" onClick={() => window.location.reload()} />
 
       {/* Spacer */}
       <div className="flex-1" />

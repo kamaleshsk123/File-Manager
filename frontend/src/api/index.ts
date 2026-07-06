@@ -147,3 +147,23 @@ export const fetchSharedFile = async (fileId: string) => {
   if (!res.ok) throw new Error('Failed to fetch shared file contents');
   return res.json();
 };
+
+export const moveItem = async (id: string, type: 'folder' | 'file', targetFolderId: string | null) => {
+  const res = await fetch(`${API_URL}/${type === 'folder' ? 'folders' : 'files'}/${id}/move`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targetFolderId }),
+  });
+  if (!res.ok) throw new Error('Failed to move item');
+  return res.json();
+};
+
+export const copyItem = async (id: string, type: 'folder' | 'file', targetFolderId: string | null) => {
+  const res = await fetch(`${API_URL}/${type === 'folder' ? 'folders' : 'files'}/${id}/copy`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targetFolderId }),
+  });
+  if (!res.ok) throw new Error('Failed to copy item');
+  return res.json();
+};

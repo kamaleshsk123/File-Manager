@@ -10,12 +10,17 @@ import StatusBar from './StatusBar';
 import RenameModal from './RenameModal';
 import ShareModal from './ShareModal';
 import { FolderPlus, Upload, FolderOpen, X } from 'lucide-react';
+import Toolbar from './Toolbar';
+import { moveItem, copyItem } from '../../api';
 
 interface MainContentProps {
   currentFolderId?: string | null;
   onFolderOpen?: (id: string, name: string) => void;
   view: 'grid' | 'list';
+  onViewChange?: (v: 'grid' | 'list') => void;
   activeTab?: string;
+  onUpload?: () => void;
+  onNewFolder?: () => void;
 }
 
 // --- New Folder Modal ---
@@ -284,12 +289,13 @@ const SkeletonCard = () => (
 );
 
 // --- Main Component ---
-const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = 'home' }: MainContentProps) => {
+const MainContent = ({ currentFolderId = null, onFolderOpen, view, onViewChange, activeTab = 'home', onUpload, onNewFolder }: MainContentProps) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [mdPreviewOpen, setMdPreviewOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<{ _id: string; name: string; filename: string } | null>(null);
+  const [clipboard, setClipboard] = useState<{ id: string; type: 'folder' | 'file'; action: 'cut' | 'copy' } | null>(null);
   const qc = useQueryClient();
 
   const handleOpenFile = (file: any) => {
@@ -384,6 +390,24 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
     }
   });
 
+  const moveMutation = useMutation({
+    mutationFn: ({ id, type, targetId }: { id: string; type: 'folder' | 'file'; targetId: string | null }) => moveItem(id, type, targetId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['folders'] });
+      qc.invalidateQueries({ queryKey: ['files'] });
+      setClipboard(null);
+    }
+  });
+
+  const copyMutation = useMutation({
+    mutationFn: ({ id, type, targetId }: { id: string; type: 'folder' | 'file'; targetId: string | null }) => copyItem(id, type, targetId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['folders'] });
+      qc.invalidateQueries({ queryKey: ['files'] });
+      setClipboard(null);
+    }
+  });
+
   const selectedItem =
     folders.find((f: any) => f._id === selectedId) ||
     files.find((f: any) => f._id === selectedId);
@@ -394,12 +418,51 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, activeTab = '
   const selectedType = selectedId ? (isSelectedFolder ? 'folder' : 'file') : undefined;
   const selectedSize = !isSelectedFolder && selectedItem ? selectedItem.size : undefined;
 
+  const handleCut = () => {
+    if (selectedId && selectedType) {
+      setClipboard({ id: selectedId, type: selectedType, action: 'cut' });
+    }
+  };
+
+  const handleCopy = () => {
+    if (selectedId && selectedType) {
+      setClipboard({ id: selectedId, type: selectedType, action: 'copy' });
+    }
+  };
+
+  const handlePaste = () => {
+    if (!clipboard) return;
+    // Don't paste if we are cutting and trying to paste into the exact same folder we are already in
+    // Note: To be fully correct, we need to check if the item is already in currentFolderId, but let the backend handle it or just send it.
+    if (clipboard.action === 'cut') {
+      moveMutation.mutate({ id: clipboard.id, type: clipboard.type, targetId: currentFolderId });
+    } else {
+      copyMutation.mutate({ id: clipboard.id, type: clipboard.type, targetId: currentFolderId });
+    }
+  };
+
   return (
     <>
       <NewFolderModal open={newFolderOpen} onClose={() => setNewFolderOpen(false)} parentId={currentFolderId} />
       <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} folderId={currentFolderId} />
 
       <div className="flex flex-1 flex-col overflow-hidden h-full w-full">
+        {/* We place the Toolbar here at the top of the main area */}
+        <Toolbar
+          view={view}
+          onViewChange={onViewChange!}
+          onUpload={onUpload}
+          onNewFolder={onNewFolder}
+          selectedCount={selectedId ? 1 : 0}
+          onCut={handleCut}
+          onCopy={handleCopy}
+          onPaste={handlePaste}
+          canPaste={!!clipboard}
+          onRename={() => selectedItem && setRenameItem({ _id: selectedItem._id, name: selectedItem.name, type: selectedType! })}
+          onDelete={() => selectedType === 'folder' ? deleteFolderMutation.mutate(selectedId!) : deleteFileMutation.mutate(selectedId!)}
+          onShare={() => selectedItem && setShareItemTarget({ _id: selectedItem._id, name: selectedItem.name, type: selectedType!, isShared: selectedItem.isShared, shareId: selectedItem.shareId, shareExpiresAt: selectedItem.shareExpiresAt })}
+        />
+
         <div className="flex flex-1 overflow-hidden">
           <main className="flex-1 overflow-y-auto bg-background">
             {isLoading ? (
