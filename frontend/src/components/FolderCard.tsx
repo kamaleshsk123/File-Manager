@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Share2, MoreVertical, PenLine, Trash2 } from 'lucide-react';
+import { Share2, MoreVertical, PenLine, Trash2, Download } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { API_URL } from '../api';
 
 interface FolderCardProps {
   folder: {
@@ -69,6 +70,14 @@ export const FolderCard = ({ folder, onDoubleClick, selected, onSelect, onDelete
             className="absolute top-7 right-0 z-50 win-context-menu animate-scale-in"
             onClick={e => e.stopPropagation()}
           >
+            <div
+              className="win-context-menu-item"
+              onClick={() => { setMenuOpen(false); window.open(`${API_URL}/folders/download/${folder._id}`); }}
+            >
+              <Download className="h-3.5 w-3.5 text-muted-foreground" />
+              Download
+            </div>
+            <div className="win-context-menu-sep" />
             <div
               className="win-context-menu-item"
               onClick={() => { setMenuOpen(false); onRename?.(); }}

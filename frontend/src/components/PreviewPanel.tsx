@@ -163,12 +163,20 @@ export const PreviewPanel = ({ item, onClose, onOpenFolder, onOpenFile }: Previe
         {/* Action Button */}
         <div className="w-full mt-auto">
           {isFolder ? (
-            <button
-              onClick={() => onOpenFolder?.(item._id, item.name)}
-              className="w-full flex items-center justify-center gap-2 h-10 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all shadow-soft"
-            >
-              <FolderOpen className="h-4 w-4" /> Open Folder
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => onOpenFolder?.(item._id, item.name)}
+                className="w-full flex items-center justify-center gap-2 h-10 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted transition-colors"
+              >
+                <FolderOpen className="h-4 w-4" /> Open Folder
+              </button>
+              <button
+                onClick={() => window.open(`${API_URL}/folders/download/${item._id}`)}
+                className="w-full flex items-center justify-center gap-2 h-10 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all shadow-soft"
+              >
+                <Download className="h-4 w-4" /> Download ZIP
+              </button>
+            </div>
           ) : (
             <div className="flex flex-col gap-2">
               <button

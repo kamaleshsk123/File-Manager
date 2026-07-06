@@ -149,15 +149,13 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename, 
               className="absolute right-0 top-7 z-50 win-context-menu animate-scale-in"
               onClick={e => e.stopPropagation()}
             >
-              {!item.isFolder && (
-                <div
-                  className="win-context-menu-item"
-                  onClick={() => { setMenuOpen(false); window.open(`${API_URL}/files/download/${item._id}`); }}
-                >
-                  <Download className="h-3.5 w-3.5 text-muted-foreground" />
-                  Download
-                </div>
-              )}
+              <div
+                className="win-context-menu-item"
+                onClick={() => { setMenuOpen(false); window.open(`${API_URL}/${item.isFolder ? 'folders' : 'files'}/download/${item._id}`); }}
+              >
+                <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                Download
+              </div>
               <div
                 className="win-context-menu-item"
                 onClick={() => { setMenuOpen(false); onRename?.(); }}
