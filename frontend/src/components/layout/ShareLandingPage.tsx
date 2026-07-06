@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import {
   fetchSharedItem,
   fetchSharedSubfolder,
-  fetchSharedFile
+  fetchSharedFile,
+  API_URL
 } from '../../api';
 import {
   Download,
@@ -103,14 +104,13 @@ const ShareLandingPage = () => {
     setPreviewFile(null);
   };
 
-  // Preview helper
   const handleFilePreview = async (file: any) => {
     setPreviewFile(file);
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (ext === 'md') {
       setPreviewLoading(true);
       try {
-        const res = await fetch(`http://localhost:5000/uploads/${file.filename}`);
+        const res = await fetch(`${API_URL}/files/download/${file._id}`);
         const text = await res.text();
         setPreviewContent(marked.parse(text) as string);
       } catch (err) {
@@ -165,9 +165,6 @@ const ShareLandingPage = () => {
             <Share2 className="h-5 w-5 text-primary" />
             <span className="font-bold text-foreground text-sm tracking-tight">DocVault Share</span>
           </div>
-          <Link to="/" className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
-            Go to DocVault <ExternalLink className="h-3 w-3" />
-          </Link>
         </header>
 
         {/* Main Body */}
@@ -180,7 +177,7 @@ const ShareLandingPage = () => {
               {isImage ? (
                 <div className="relative max-h-[350px] w-full flex items-center justify-center rounded-2xl overflow-hidden border border-border bg-black/5">
                   <img
-                    src={`http://localhost:5000/uploads/${file.filename}`}
+                    src={`${API_URL}/files/download/${file._id}`}
                     alt={file.name}
                     className="max-h-[320px] max-w-full object-contain hover:scale-[1.02] transition-transform duration-300"
                   />
@@ -219,7 +216,7 @@ const ShareLandingPage = () => {
 
               <div className="mt-8">
                 <a
-                  href={`http://localhost:5000/api/files/download/${file._id}`}
+                  href={`${API_URL}/files/download/${file._id}`}
                   className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/95 transition-all shadow-soft"
                 >
                   <Download className="h-4 w-4" /> Download File
@@ -233,7 +230,7 @@ const ShareLandingPage = () => {
           {/* Render Markdown Preview if md */}
           {isMarkdown && (
             <div className="w-full mt-6 rounded-2xl border border-border bg-card p-6 md:p-8 shadow-card prose dark:prose-invert max-w-full">
-              <MarkdownPreviewer filename={file.filename} />
+              <MarkdownPreviewer fileId={file._id} />
             </div>
           )}
 
@@ -256,9 +253,6 @@ const ShareLandingPage = () => {
           <Share2 className="h-5 w-5 text-primary animate-pulse" />
           <span className="font-bold text-foreground text-sm tracking-tight">DocVault Share</span>
         </div>
-        <Link to="/" className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
-          Go to DocVault <ExternalLink className="h-3 w-3" />
-        </Link>
       </header>
 
       {/* Main Folder Layout */}
@@ -338,7 +332,7 @@ const ShareLandingPage = () => {
                       <tr
                         key={f._id}
                         onClick={() => handleFilePreview(f)}
-                        onDoubleClick={() => window.open(`http://localhost:5000/api/files/download/${f._id}`)}
+                        onDoubleClick={() => window.open(`${API_URL}/files/download/${f._id}`)}
                         className={`border-b border-border hover:bg-muted/40 cursor-pointer select-none text-xs ${
                           previewFile?._id === f._id ? 'bg-primary/5 hover:bg-primary/5' : ''
                         }`}
@@ -357,7 +351,7 @@ const ShareLandingPage = () => {
                             <Eye className="h-3 w-3" /> Preview
                           </button>
                           <a
-                            href={`http://localhost:5000/api/files/download/${f._id}`}
+                            href={`${API_URL}/files/download/${f._id}`}
                             className="h-7 px-2 rounded-lg bg-primary hover:bg-primary/95 text-[11px] font-semibold text-white transition-colors flex items-center justify-center"
                           >
                             <Download className="h-3 w-3" />
@@ -394,7 +388,7 @@ const ShareLandingPage = () => {
               <div className="flex flex-col items-center justify-center p-6 border border-border rounded-2xl bg-muted/10 mb-5">
                 {previewFile.type.startsWith('image/') ? (
                   <img
-                    src={`http://localhost:5000/uploads/${previewFile.filename}`}
+                    src={`${API_URL}/files/download/${previewFile._id}`}
                     alt={previewFile.name}
                     className="max-h-[140px] rounded-lg object-contain"
                   />
@@ -426,7 +420,7 @@ const ShareLandingPage = () => {
                   <FileText className="h-10 w-10 text-muted-foreground/30 mb-2" />
                   <p className="text-xs font-medium text-foreground">PDF Preview</p>
                   <a
-                    href={`http://localhost:5000/uploads/${previewFile.filename}`}
+                    href={`${API_URL}/files/download/${previewFile._id}`}
                     target="_blank"
                     rel="noreferrer"
                     className="mt-3 text-xs text-primary font-semibold hover:underline flex items-center gap-1"
@@ -440,7 +434,7 @@ const ShareLandingPage = () => {
 
             <div className="p-4 border-t border-border bg-muted/10">
               <a
-                href={`http://localhost:5000/api/files/download/${previewFile._id}`}
+                href={`${API_URL}/files/download/${previewFile._id}`}
                 className="w-full h-10 rounded-xl bg-primary hover:bg-primary/95 text-xs font-semibold text-white transition-colors flex items-center justify-center gap-1.5 shadow-soft"
               >
                 <Download className="h-3.5 w-3.5" /> Download this File
@@ -456,12 +450,12 @@ const ShareLandingPage = () => {
 };
 
 // Markdown loading previewer
-const MarkdownPreviewer = ({ filename }: { filename: string }) => {
+const MarkdownPreviewer = ({ fileId }: { fileId: string }) => {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/uploads/${filename}`)
+    fetch(`${API_URL}/files/download/${fileId}`)
       .then(res => res.text())
       .then(text => {
         setContent(marked.parse(text) as string);
@@ -471,7 +465,7 @@ const MarkdownPreviewer = ({ filename }: { filename: string }) => {
         setContent('<p className="text-destructive">Failed to load markdown contents.</p>');
         setLoading(false);
       });
-  }, [filename]);
+  }, [fileId]);
 
   if (loading) {
     return <RefreshCw className="h-5 w-5 text-primary animate-spin mx-auto" />;
