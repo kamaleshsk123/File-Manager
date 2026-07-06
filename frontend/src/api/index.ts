@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const fetchStorage = async (): Promise<{ usedBytes: number; totalFiles: number }> => {
   const res = await fetch(`${API_URL}/storage`);

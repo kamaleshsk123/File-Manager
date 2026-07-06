@@ -11,7 +11,7 @@ import RenameModal from './RenameModal';
 import ShareModal from './ShareModal';
 import { FolderPlus, Upload, FolderOpen, X } from 'lucide-react';
 import Toolbar from './Toolbar';
-import { moveItem, copyItem } from '../../api';
+import { moveItem, copyItem, API_URL } from '../../api';
 
 interface MainContentProps {
   currentFolderId?: string | null;
@@ -303,7 +303,7 @@ const MainContent = ({ currentFolderId = null, onFolderOpen, view, onViewChange,
       setPreviewFile(file);
       setMdPreviewOpen(true);
     } else {
-      window.open(`http://localhost:5000/uploads/${file.filename}`);
+      window.open(`${API_URL}/files/download/${file._id}`);
     }
   };
 

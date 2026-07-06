@@ -1,13 +1,15 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
+import mongoose from 'mongoose';
+import { GridFSBucket, ObjectId } from 'mongodb';
 import path from 'path';
-import File from '../models/File';
 import fs from 'fs';
+import File from '../models/File';
 import crypto from 'crypto';
 
 const router = Router();
 
-// Ensure uploads directory exists
+// Ensure uploads directory exists (for legacy local files)
 const uploadDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -16,14 +18,8 @@ if (!fs.existsSync(uploadDir)) {
 const ALLOWED_MIME_TYPES = ['application/pdf', 'text/markdown', 'text/x-markdown'];
 const ALLOWED_EXTENSIONS = ['.pdf', '.md'];
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
+// Use memory storage for multer since we'll stream to GridFS
+const storage = multer.memoryStorage();
 
 // Reject any file that is not .pdf or .md
 const fileFilter: multer.Options['fileFilter'] = (req, file, cb) => {
@@ -51,22 +47,41 @@ router.post('/upload', upload.array('files', 20), async (req: Request, res: Resp
     const { folderId } = req.body;
     const resolvedFolderId = folderId === 'null' || !folderId ? null : folderId;
 
+    const db = mongoose.connection.db;
+    if (!db) {
+        throw new Error('Database connection not established');
+    }
+    const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+
     // Save all files to DB in parallel
     const saved = await Promise.all(
-      files.map(file =>
-        new File({
-          name: file.originalname,
-          folderId: resolvedFolderId,
-          size: file.size,
-          type: file.mimetype,
-          filename: file.filename,
-        }).save()
-      )
+      files.map(async (file) => {
+        // Upload to GridFS
+        const uploadStream = bucket.openUploadStream(file.originalname, {
+            metadata: { contentType: file.mimetype }
+        });
+        
+        return new Promise<any>((resolve, reject) => {
+            uploadStream.on('error', reject);
+            uploadStream.on('finish', async () => {
+                // Save metadata record
+                const fileRecord = new File({
+                    name: file.originalname,
+                    folderId: resolvedFolderId,
+                    size: file.size,
+                    type: file.mimetype,
+                    filename: uploadStream.id.toString(), // Use GridFS file ID as filename for retrieval
+                });
+                await fileRecord.save();
+                resolve(fileRecord);
+            });
+            uploadStream.end(file.buffer);
+        });
+      })
     );
 
     res.status(201).json(saved);
   } catch (error: any) {
-    // Multer fileFilter rejection comes through here
     res.status(400).json({ error: error.message || 'Failed to upload file(s)' });
   }
 });
@@ -77,12 +92,29 @@ router.get('/download/:id', async (req: Request, res: Response) => {
     const file = await File.findById(req.params.id);
     if (!file) return res.status(404).json({ error: 'File not found' });
 
-    const filePath = path.join(uploadDir, file.filename);
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'Physical file not found on disk' });
-    }
+    res.set('Content-Type', file.type);
+    res.set('Content-Disposition', `attachment; filename="${file.name}"`);
 
-    res.download(filePath, file.name);
+    if (ObjectId.isValid(file.filename)) {
+        // GridFS File
+        const db = mongoose.connection.db;
+        if (!db) return res.status(500).json({ error: 'Database not connected' });
+        
+        const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+        const downloadStream = bucket.openDownloadStream(new ObjectId(file.filename));
+        
+        downloadStream.on('error', () => {
+            res.status(404).json({ error: 'Physical file not found in GridFS' });
+        });
+        downloadStream.pipe(res);
+    } else {
+        // Legacy Disk File
+        const filePath = path.join(uploadDir, file.filename);
+        if (!fs.existsSync(filePath)) {
+          return res.status(404).json({ error: 'Physical file not found on disk' });
+        }
+        res.download(filePath, file.name);
+    }
   } catch (error) {
     res.status(500).json({ error: 'Failed to download file' });
   }
@@ -212,10 +244,23 @@ router.delete('/:id', async (req: Request, res: Response) => {
       return res.json({ message: 'File moved to trash', softDeleted: true });
     }
 
-    // Delete physical file from disk
-    const filePath = path.join(uploadDir, file.filename);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    if (ObjectId.isValid(file.filename)) {
+        // Delete physical file from GridFS
+        const db = mongoose.connection.db;
+        if (db) {
+            const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+            try {
+                await bucket.delete(new ObjectId(file.filename));
+            } catch (err) {
+                console.error('GridFS delete error (file might not exist):', err);
+            }
+        }
+    } else {
+        // Delete physical file from local disk
+        const filePath = path.join(uploadDir, file.filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
     }
 
     await File.findByIdAndDelete(req.params.id);
@@ -289,25 +334,55 @@ router.post('/:id/copy', async (req: Request, res: Response) => {
     const file = await File.findById(req.params.id);
     if (!file) return res.status(404).json({ error: 'File not found' });
 
-    // Copy physical file
-    const newFilename = `${Date.now()}-copy-${file.name}`;
-    const srcPath = path.join(uploadDir, file.filename);
-    const destPath = path.join(uploadDir, newFilename);
+    if (ObjectId.isValid(file.filename)) {
+        // GridFS File Copy
+        const db = mongoose.connection.db;
+        if (!db) return res.status(500).json({ error: 'Database not connected' });
+        
+        const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+        const downloadStream = bucket.openDownloadStream(new ObjectId(file.filename));
+        const uploadStream = bucket.openUploadStream(`Copy of ${file.name}`, {
+            metadata: { contentType: file.type }
+        });
 
-    if (fs.existsSync(srcPath)) {
-      fs.copyFileSync(srcPath, destPath);
+        downloadStream.pipe(uploadStream);
+
+        uploadStream.on('finish', async () => {
+            const newFile = new File({
+                name: `Copy of ${file.name}`,
+                folderId: targetFolderId === 'null' || !targetFolderId ? null : targetFolderId,
+                size: file.size,
+                type: file.type,
+                filename: uploadStream.id.toString(), // New GridFS ID
+            });
+            await newFile.save();
+            res.status(201).json(newFile);
+        });
+        
+        downloadStream.on('error', (err) => res.status(500).json({ error: 'Failed to read original file from GridFS' }));
+        uploadStream.on('error', (err) => res.status(500).json({ error: 'Failed to write copied file to GridFS' }));
+
+    } else {
+        // Legacy Disk File Copy
+        const newFilename = `${Date.now()}-copy-${file.name}`;
+        const srcPath = path.join(uploadDir, file.filename);
+        const destPath = path.join(uploadDir, newFilename);
+
+        if (fs.existsSync(srcPath)) {
+            fs.copyFileSync(srcPath, destPath);
+        }
+
+        const newFile = new File({
+            name: `Copy of ${file.name}`,
+            folderId: targetFolderId === 'null' || !targetFolderId ? null : targetFolderId,
+            size: file.size,
+            type: file.type,
+            filename: fs.existsSync(srcPath) ? newFilename : file.filename,
+        });
+
+        await newFile.save();
+        res.status(201).json(newFile);
     }
-
-    const newFile = new File({
-      name: `Copy of ${file.name}`,
-      folderId: targetFolderId === 'null' || !targetFolderId ? null : targetFolderId,
-      size: file.size,
-      type: file.type,
-      filename: fs.existsSync(srcPath) ? newFilename : file.filename,
-    });
-
-    await newFile.save();
-    res.status(201).json(newFile);
   } catch (error) {
     res.status(500).json({ error: 'Failed to copy file' });
   }
