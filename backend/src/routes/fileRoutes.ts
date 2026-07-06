@@ -106,6 +106,11 @@ router.get('/download/:id', async (req: Request, res: Response) => {
         downloadStream.on('error', () => {
             res.status(404).json({ error: 'Physical file not found in GridFS' });
         });
+
+        // Set headers so the browser can preview it properly
+        res.set('Content-Type', file.type || 'application/octet-stream');
+        res.set('Content-Disposition', `inline; filename="${file.name}"`);
+
         downloadStream.pipe(res);
     } else {
         // Legacy Disk File
