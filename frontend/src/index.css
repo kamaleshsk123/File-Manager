@@ -1,89 +1,66 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 220 25% 97%;
-    --foreground: 224 71% 4%;
+    /* ── Windows 11 Light Theme Palette ── */
 
+    /* Content / Background */
+    --background: 0 0% 100%;           /* #FFFFFF — main content area */
+    --foreground: 0 0% 13%;            /* #202020 — primary text */
+
+    /* Card (same as background in Windows) */
     --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
+    --card-foreground: 0 0% 13%;
 
+    /* Popover / Context menus */
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
+    --popover-foreground: 0 0% 13%;
 
-    --primary: 226 71% 55%;
+    /* Primary accent — Microsoft Blue #0078D4 */
+    --primary: 207 100% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 9% 46%;
+    /* Secondary */
+    --secondary: 0 0% 95%;             /* #F3F3F3 */
+    --secondary-foreground: 0 0% 13%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 55%;
+    /* Muted — subtle backgrounds */
+    --muted: 0 0% 95%;                 /* #F3F3F3 */
+    --muted-foreground: 0 0% 38%;      /* #616161 */
 
-    --accent: 226 71% 55%;
+    /* Accent */
+    --accent: 207 100% 42%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    /* Destructive */
+    --destructive: 0 84% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 226 71% 55%;
+    /* Border */
+    --border: 0 0% 89%;                /* #E3E3E3 */
+    --input: 0 0% 89%;
+    --ring: 207 100% 42%;
 
-    --radius: 0.625rem;
+    /* Border radius — Windows 11 uses 4px */
+    --radius: 0.25rem;
 
-    /* Custom DocVault tokens */
-    --sidebar-bg: 224 71% 4%;
-    --sidebar-fg: 220 14% 80%;
-    --sidebar-active: 226 71% 55%;
-    --sidebar-hover: 224 20% 12%;
-    --sidebar-border: 224 20% 10%;
+    /* ── Sidebar / Navigation Pane ── */
+    --sidebar-bg: 0 0% 95%;            /* #F3F3F3 */
+    --sidebar-fg: 0 0% 13%;            /* #202020 */
+    --sidebar-active: 207 73% 89%;     /* #CCE4F7 light selection blue */
+    --sidebar-hover: 0 0% 91%;         /* #E8E8E8 */
+    --sidebar-border: 0 0% 89%;        /* #E3E3E3 */
 
-    --toolbar-bg: 0 0% 100%;
-    --header-bg: 0 0% 100%;
-  }
+    /* ── Toolbar / Command Bar ── */
+    --toolbar-bg: 0 0% 97%;            /* #F8F8F8 */
+    --header-bg: 0 0% 100%;            /* #FFFFFF */
 
-  .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-
-    --card: 224 50% 6%;
-    --card-foreground: 213 31% 91%;
-
-    --popover: 224 50% 6%;
-    --popover-foreground: 213 31% 91%;
-
-    --primary: 226 71% 60%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 224 20% 12%;
-    --secondary-foreground: 220 14% 75%;
-
-    --muted: 224 20% 12%;
-    --muted-foreground: 220 9% 55%;
-
-    --accent: 226 71% 60%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 70% 55%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 224 20% 14%;
-    --input: 224 20% 14%;
-    --ring: 226 71% 60%;
-
-    --sidebar-bg: 224 50% 6%;
-    --sidebar-fg: 220 14% 70%;
-    --sidebar-active: 226 71% 60%;
-    --sidebar-hover: 224 20% 10%;
-    --sidebar-border: 224 20% 8%;
-
-    --toolbar-bg: 224 50% 6%;
-    --header-bg: 224 50% 6%;
+    /* ── Windows-specific selection colors ── */
+    --win-selection: 208 100% 95%;     /* #E5F3FF very light blue hover */
+    --win-selection-border: 207 100% 42%; /* #0078D4 border on select */
+    --win-hover: 0 0% 92%;             /* #EBEBEB subtle hover */
   }
 }
 
@@ -97,74 +74,165 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    font-feature-settings: "cv11", "ss01";
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 13px;
   }
 }
 
 @layer utilities {
-  .glass {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+  /* Windows 11 item hover */
+  .win-item-hover {
+    @apply transition-colors duration-75;
+  }
+  .win-item-hover:hover {
+    background-color: hsl(var(--win-hover));
   }
 
-  .glass-dark {
-    background: rgba(15, 20, 40, 0.8);
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+  /* Windows 11 item selected */
+  .win-item-selected {
+    background-color: hsl(var(--win-selection));
+    outline: 1px solid hsl(var(--win-selection-border));
   }
 
-  .card-hover {
-    @apply transition-all duration-200 ease-out;
+  /* Windows flat button */
+  .win-btn {
+    @apply flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[12px] font-normal text-foreground transition-colors duration-75 cursor-pointer select-none;
   }
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.09), 0 2px 8px rgba(0,0,0,0.06);
+  .win-btn:hover {
+    background-color: hsl(var(--win-hover));
+  }
+  .win-btn:active {
+    background-color: hsl(0 0% 86%);
+  }
+  .win-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .win-btn:disabled:hover {
+    background-color: transparent;
   }
 
-  .sidebar-item-active {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(226, 90%, 65%) 100%);
-    color: white;
-    box-shadow: 0 4px 12px hsla(var(--primary), 0.35);
+  /* Sidebar nav item */
+  .win-nav-item {
+    @apply flex items-center gap-1.5 w-full px-3 py-1 text-[13px] text-sidebar-fg cursor-pointer select-none transition-colors duration-75 rounded;
+  }
+  .win-nav-item:hover {
+    background-color: hsl(var(--sidebar-hover));
+  }
+  .win-nav-item.active {
+    background-color: hsl(var(--sidebar-active));
+    font-weight: 600;
   }
 
-  .icon-folder {
-    filter: drop-shadow(0 2px 6px rgba(59, 130, 246, 0.3));
+  /* Windows file / folder item (grid) */
+  .win-file-item {
+    @apply flex flex-col items-center justify-start p-2 cursor-pointer select-none rounded transition-colors duration-75;
   }
-
-  .upload-area {
-    border: 2px dashed hsl(var(--border));
-    transition: all 0.2s ease;
+  .win-file-item:hover {
+    background-color: hsl(var(--win-selection));
+    outline: 1px solid hsl(var(--border));
   }
-  .upload-area:hover, .upload-area.dragover {
-    border-color: hsl(var(--primary));
-    background: hsla(var(--primary), 0.04);
+  .win-file-item.selected {
+    background-color: hsl(var(--win-selection));
+    outline: 1px solid hsl(var(--win-selection-border));
   }
 
   .animate-fade-in {
-    animation: fadeIn 0.25s ease-out;
+    animation: fadeIn 0.15s ease-out;
   }
-
   .animate-scale-in {
-    animation: scaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: scaleIn 0.12s ease-out;
   }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.94); }
+  from { opacity: 0; transform: scale(0.97); }
   to   { opacity: 1; transform: scale(1); }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* Windows 11 scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+::-webkit-scrollbar-thumb { background: hsl(0 0% 75%); border-radius: 4px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: hsl(0 0% 60%); border: 2px solid transparent; background-clip: padding-box; }
+
+/* Windows-style context menu */
+.win-context-menu {
+  background: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.14), 0 0 1px rgba(0,0,0,0.1);
+  padding: 4px;
+  min-width: 160px;
+}
+.win-context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: hsl(var(--foreground));
+  transition: background 0.07s;
+}
+.win-context-menu-item:hover {
+  background: hsl(var(--win-hover));
+}
+.win-context-menu-sep {
+  height: 1px;
+  background: hsl(var(--border));
+  margin: 3px 0;
+}
+
+/* Markdown Content Styles */
+.markdown-content h1 {
+  @apply text-2xl font-bold text-foreground border-b border-border pb-2 mt-6 mb-4;
+}
+.markdown-content h2 {
+  @apply text-xl font-bold text-foreground mt-5 mb-3;
+}
+.markdown-content h3 {
+  @apply text-lg font-semibold text-foreground mt-4 mb-2;
+}
+.markdown-content p {
+  @apply text-sm text-foreground/90 leading-relaxed my-3;
+}
+.markdown-content strong {
+  @apply font-bold text-foreground;
+}
+.markdown-content ul {
+  @apply list-disc pl-6 my-3 text-sm text-foreground/90 space-y-1.5;
+}
+.markdown-content ol {
+  @apply list-decimal pl-6 my-3 text-sm text-foreground/90 space-y-1.5;
+}
+.markdown-content code {
+  @apply bg-muted text-blue-700 font-mono text-[11px] px-1.5 py-0.5 rounded border border-border;
+}
+.markdown-content pre {
+  @apply bg-muted text-foreground font-mono text-[11px] p-4 rounded border border-border my-4 overflow-x-auto block;
+}
+.markdown-content pre code {
+  @apply bg-transparent p-0 border-none text-foreground;
+}
+.markdown-content blockquote {
+  @apply border-l-4 border-primary/40 bg-primary/[0.02] pl-4 py-2 my-4 italic text-muted-foreground text-sm;
+}
+.markdown-content a {
+  @apply text-primary hover:underline font-medium;
+}
+.markdown-content table {
+  @apply w-full text-left border-collapse my-5 text-xs;
+}
+.markdown-content th {
+  @apply border-b border-border bg-muted/50 p-2.5 font-semibold text-foreground;
+}
+.markdown-content td {
+  @apply border-b border-border p-2.5 text-foreground/80;
+}

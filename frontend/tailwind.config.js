@@ -1,13 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ["class"],
+  darkMode: "media",
   content: [
     './src/**/*.{ts,tsx}',
   ],
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ["'Segoe UI'", "system-ui", "-apple-system", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -50,27 +50,31 @@ export default {
           hover: "hsl(var(--sidebar-hover))",
           border: "hsl(var(--sidebar-border))",
         },
+        "win-selection": "hsl(var(--win-selection))",
+        "win-selection-border": "hsl(var(--win-selection-border))",
+        "win-hover": "hsl(var(--win-hover))",
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-        xl: "calc(var(--radius) + 4px)",
-        "2xl": "calc(var(--radius) + 8px)",
+        md: "calc(var(--radius) - 1px)",
+        sm: "calc(var(--radius) - 2px)",
+        xl: "calc(var(--radius) + 2px)",
+        "2xl": "calc(var(--radius) + 4px)",
       },
       boxShadow: {
-        soft: "0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
-        card: "0 4px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)",
-        "card-hover": "0 8px 24px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06)",
-        "primary-glow": "0 4px 16px hsla(226,71%,55%,0.3)",
+        soft: "0 1px 3px rgba(0,0,0,0.08)",
+        card: "0 2px 6px rgba(0,0,0,0.08)",
+        "card-hover": "0 4px 12px rgba(0,0,0,0.1)",
+        "primary-glow": "none",
+        "win-menu": "0 4px 16px rgba(0,0,0,0.15), 0 0 1px rgba(0,0,0,0.12)",
       },
       keyframes: {
         "fade-in": {
-          from: { opacity: "0", transform: "translateY(6px)" },
+          from: { opacity: "0", transform: "translateY(4px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "scale-in": {
-          from: { opacity: "0", transform: "scale(0.95)" },
+          from: { opacity: "0", transform: "scale(0.97)" },
           to: { opacity: "1", transform: "scale(1)" },
         },
         shimmer: {
@@ -79,8 +83,8 @@ export default {
         },
       },
       animation: {
-        "fade-in": "fade-in 0.25s ease-out",
-        "scale-in": "scale-in 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        "fade-in": "fade-in 0.15s ease-out",
+        "scale-in": "scale-in 0.12s ease-out",
         shimmer: "shimmer 1.8s linear infinite",
       },
     },

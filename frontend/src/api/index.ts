@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const fetchStorage = async (): Promise<{ usedBytes: number; totalFiles: number }> => {
   const res = await fetch(`${API_URL}/storage`);
@@ -36,17 +36,19 @@ export const fetchFiles = async (folderId?: string | null, filterType?: string) 
   return res.json();
 };
 
-export const uploadFile = async (file: File, folderId?: string | null) => {
+export const uploadFile = async (files: File[], folderId?: string | null) => {
   const formData = new FormData();
-  formData.append('file', file);
-  if (folderId) formData.append('folderId', folderId);
-  else formData.append('folderId', 'null');
+  files.forEach(file => formData.append('files', file));
+  formData.append('folderId', folderId ?? 'null');
 
   const res = await fetch(`${API_URL}/files/upload`, {
     method: 'POST',
     body: formData,
   });
-  if (!res.ok) throw new Error('Failed to upload file');
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Failed to upload file(s)');
+  }
   return res.json();
 };
 
@@ -87,5 +89,81 @@ export const toggleFavoriteFolder = async (id: string) => {
 export const toggleFavoriteFile = async (id: string) => {
   const res = await fetch(`${API_URL}/files/${id}/favorite`, { method: 'PUT' });
   if (!res.ok) throw new Error('Failed to toggle favorite');
+  return res.json();
+};
+
+export const renameFolder = async (id: string, name: string) => {
+  const res = await fetch(`${API_URL}/folders/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error('Failed to rename folder');
+  return res.json();
+};
+
+export const renameFile = async (id: string, name: string) => {
+  const res = await fetch(`${API_URL}/files/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error('Failed to rename file');
+  return res.json();
+};
+
+export const shareItem = async (id: string, type: 'folder' | 'file', expiresInHours?: number) => {
+  const res = await fetch(`${API_URL}/${type === 'folder' ? 'folders' : 'files'}/${id}/share`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ expiresInHours }),
+  });
+  if (!res.ok) throw new Error('Failed to share item');
+  return res.json();
+};
+
+export const unshareItem = async (id: string, type: 'folder' | 'file') => {
+  const res = await fetch(`${API_URL}/${type === 'folder' ? 'folders' : 'files'}/${id}/share`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to unshare item');
+  return res.json();
+};
+
+export const fetchSharedItem = async (type: string, shareId: string) => {
+  const res = await fetch(`${API_URL}/share/${type}/${shareId}`);
+  if (!res.ok) throw new Error('Failed to fetch shared item');
+  return res.json();
+};
+
+export const fetchSharedSubfolder = async (folderId: string) => {
+  const res = await fetch(`${API_URL}/share/folder/node/${folderId}`);
+  if (!res.ok) throw new Error('Failed to fetch shared subfolder contents');
+  return res.json();
+};
+
+export const fetchSharedFile = async (fileId: string) => {
+  const res = await fetch(`${API_URL}/share/file/node/${fileId}`);
+  if (!res.ok) throw new Error('Failed to fetch shared file contents');
+  return res.json();
+};
+
+export const moveItem = async (id: string, type: 'folder' | 'file', targetFolderId: string | null) => {
+  const res = await fetch(`${API_URL}/${type === 'folder' ? 'folders' : 'files'}/${id}/move`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targetFolderId }),
+  });
+  if (!res.ok) throw new Error('Failed to move item');
+  return res.json();
+};
+
+export const copyItem = async (id: string, type: 'folder' | 'file', targetFolderId: string | null) => {
+  const res = await fetch(`${API_URL}/${type === 'folder' ? 'folders' : 'files'}/${id}/copy`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targetFolderId }),
+  });
+  if (!res.ok) throw new Error('Failed to copy item');
   return res.json();
 };

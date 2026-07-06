@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
-import Toolbar from './components/layout/Toolbar';
+
 import Breadcrumb from './components/layout/Breadcrumb';
-import StatusBar from './components/layout/StatusBar';
 import MainContent from './components/layout/MainContent';
 import { NewFolderModal, UploadModal } from './components/layout/MainContent';
 
@@ -32,7 +31,7 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground font-sans">
+    <div className="flex h-screen flex-col overflow-hidden bg-white text-foreground" style={{fontFamily:"'Segoe UI', system-ui, -apple-system, sans-serif"}}>
       <NewFolderModal open={newFolderOpen} onClose={() => setNewFolderOpen(false)} parentId={currentFolderId} />
       <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} folderId={currentFolderId} />
 
@@ -45,20 +44,16 @@ function App() {
         <Sidebar active={activeTab} onChange={setActiveTab} />
 
         <div className="flex flex-1 flex-col overflow-hidden">
-          <Toolbar
-            view={view}
-            onViewChange={setView}
-            onUpload={() => setUploadOpen(true)}
-            onNewFolder={() => setNewFolderOpen(true)}
-          />
           <Breadcrumb path={breadcrumbPath} onNavigate={handleNavigate} />
           <MainContent
             currentFolderId={currentFolderId}
             onFolderOpen={handleFolderOpen}
             view={view}
+            onViewChange={setView}
             activeTab={activeTab}
+            onUpload={() => setUploadOpen(true)}
+            onNewFolder={() => setNewFolderOpen(true)}
           />
-          <StatusBar />
         </div>
       </div>
     </div>
