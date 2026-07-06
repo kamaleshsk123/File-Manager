@@ -249,21 +249,36 @@ router.get('/download/:id', async (req: Request, res: Response) => {
     const bucket = db ? new GridFSBucket(db, { bucketName: 'uploads' }) : null;
     const uploadDir = path.join(__dirname, '../../uploads');
 
+    // Helper to read a GridFS stream fully into a Buffer
+    const readGridFSStream = (objectId: ObjectId): Promise<Buffer> => {
+        return new Promise((resolve, reject) => {
+            const chunks: Buffer[] = [];
+            const stream = bucket!.openDownloadStream(objectId);
+            stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+            stream.on('end', () => resolve(Buffer.concat(chunks)));
+            stream.on('error', reject);
+        });
+    };
+
     // Helper to recursively append contents
     const appendFolder = async (folderId: string, currentPath: string) => {
         const files = await File.find({ folderId, isDeleted: false });
         for (const file of files) {
             const filePath = `${currentPath}${file.name}`;
-            if (ObjectId.isValid(file.filename) && bucket) {
-                // GridFS File
-                const stream = bucket.openDownloadStream(new ObjectId(file.filename));
-                archive.append(stream, { name: filePath });
-            } else {
-                // Legacy local disk file
-                const localPath = path.join(uploadDir, file.filename);
-                if (fs.existsSync(localPath)) {
-                    archive.append(fs.createReadStream(localPath), { name: filePath });
+            try {
+                if (ObjectId.isValid(file.filename) && bucket) {
+                    // GridFS: read fully into memory first to avoid finalize race condition
+                    const buffer = await readGridFSStream(new ObjectId(file.filename));
+                    archive.append(buffer, { name: filePath });
+                } else {
+                    // Legacy local disk file
+                    const localPath = path.join(uploadDir, file.filename);
+                    if (fs.existsSync(localPath)) {
+                        archive.append(fs.createReadStream(localPath), { name: filePath });
+                    }
                 }
+            } catch (fileErr) {
+                console.error(`Skipping file ${file.name}:`, fileErr);
             }
         }
 
