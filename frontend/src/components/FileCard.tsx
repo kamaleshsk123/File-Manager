@@ -15,6 +15,7 @@ interface FileCardProps {
     uploadedAt?: string;
     filename?: string;
     isShared?: boolean;
+    isFolder?: boolean;
   };
   selected?: boolean;
   onSelect?: () => void;
