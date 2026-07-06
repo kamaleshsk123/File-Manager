@@ -107,21 +107,15 @@ const ShareLandingPage = () => {
     setPreviewFile(null);
   };
 
-  const handleFilePreview = async (file: any) => {
-    setPreviewFile(file);
+  const handleFilePreview = (file: any) => {
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (ext === 'md') {
-      setPreviewLoading(true);
-      try {
-        const res = await fetch(`${API_URL}/files/download/${file._id}`);
-        const text = await res.text();
-        setPreviewContent(marked.parse(text) as string);
-      } catch (err) {
-        setPreviewContent('<p class="text-destructive">Failed to load preview.</p>');
-      } finally {
-        setPreviewLoading(false);
-      }
+      setPreviewFile(file);
+      setMdPreviewOpen(true);
+    } else if (file.type?.includes('pdf') || file.name.toLowerCase().endsWith('.pdf')) {
+      window.open(`${API_URL}/files/download/${file._id}`);
     } else {
+      setPreviewFile(file);
       setPreviewContent('');
     }
   };
@@ -370,7 +364,7 @@ const ShareLandingPage = () => {
                         </td>
                         <td className="py-3 px-3 text-muted-foreground">{formatSize(f.size)}</td>
                         <td className="py-3 px-3 text-muted-foreground uppercase text-[10px]">{f.name.split('.').pop() || 'FILE'}</td>
-                        <td className="py-3 pr-4 text-right flex gap-1.5 justify-end">
+                        <td className="py-3 pr-4 text-right flex gap-1.5 justify-end items-center">
                           <button
                             onClick={() => handleFilePreview(f)}
                             className="h-7 px-2 rounded-lg border border-border hover:bg-muted text-[11px] font-medium text-foreground transition-colors flex items-center gap-1"
@@ -394,8 +388,8 @@ const ShareLandingPage = () => {
           </div>
         </div>
 
-        {/* Preview Side panel (if file selected) */}
-        {previewFile && (
+        {/* Preview Side panel (if file selected and not markdown) */}
+        {previewFile && !previewFile.name.endsWith('.md') && (
           <div className="w-[380px] border-l border-border bg-card flex flex-col shrink-0 overflow-hidden animate-slide-in">
             
             {/* Title / Close button */}
@@ -429,27 +423,6 @@ const ShareLandingPage = () => {
                 </h3>
                 <span className="text-[11px] text-muted-foreground mt-0.5">{formatSize(previewFile.size)}</span>
               </div>
-
-              {/* Render Markdown Preview */}
-              {previewFile.name.endsWith('.md') && (
-                <div className="flex-1 flex flex-col border border-border rounded-xl p-4 bg-muted/20 overflow-hidden text-xs">
-                  {previewLoading ? (
-                    <RefreshCw className="h-4 w-4 animate-spin text-primary mx-auto" />
-                  ) : (
-                    <>
-                      <div className="flex-1 overflow-auto prose dark:prose-invert max-w-full" dangerouslySetInnerHTML={{ __html: previewContent }} />
-                      <div className="pt-3 border-t border-border/50 mt-3 flex justify-center">
-                        <button
-                          onClick={() => setMdPreviewOpen(true)}
-                          className="h-8 px-3 rounded-lg bg-card border border-border hover:bg-muted text-[11px] font-semibold transition-colors flex items-center gap-1.5 shadow-sm"
-                        >
-                          <Eye className="h-3 w-3 text-primary" /> Open Full Viewer
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
 
               {/* PDF Preview message */}
               {previewFile.type.includes('pdf') && (
@@ -487,7 +460,10 @@ const ShareLandingPage = () => {
       {previewFile?.name?.endsWith('.md') && (
         <MarkdownPreviewModal
           open={mdPreviewOpen}
-          onClose={() => setMdPreviewOpen(false)}
+          onClose={() => {
+            setMdPreviewOpen(false);
+            setPreviewFile(null);
+          }}
           fileName={previewFile.name}
           fileId={previewFile._id}
           fileUrl={`${API_URL}/files/download/${previewFile._id}`}
