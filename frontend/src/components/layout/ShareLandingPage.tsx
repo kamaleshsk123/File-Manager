@@ -27,6 +27,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { marked } from 'marked';
+import { MarkdownPreviewModal } from '../MarkdownPreviewModal';
 
 // Helper to determine icon configuration
 const getFileConfig = (type: string, name: string) => {
@@ -60,6 +61,7 @@ const ShareLandingPage = () => {
   const [previewFile, setPreviewFile] = useState<any>(null);
   const [previewContent, setPreviewContent] = useState<string>('');
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [mdPreviewOpen, setMdPreviewOpen] = useState(false);
 
   // Initial fetch of the shared item
   const { data, error, isLoading } = useQuery({
@@ -214,7 +216,21 @@ const ShareLandingPage = () => {
                 </div>
               </div>
 
-              <div className="mt-8">
+              <div className="mt-8 flex flex-col gap-2.5">
+                {(isMarkdown || file.type.includes('pdf')) && (
+                  <button
+                    onClick={() => {
+                        if (isMarkdown) {
+                            setMdPreviewOpen(true);
+                        } else {
+                            window.open(`${API_URL}/files/download/${file._id}`);
+                        }
+                    }}
+                    className="w-full h-11 flex items-center justify-center gap-2 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted transition-all shadow-soft"
+                  >
+                    <Eye className="h-4 w-4" /> Preview File
+                  </button>
+                )}
                 <a
                   href={`${API_URL}/files/download/${file._id}`}
                   className="w-full h-11 flex items-center justify-center gap-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/95 transition-all shadow-soft"
@@ -227,11 +243,15 @@ const ShareLandingPage = () => {
 
           </div>
 
-          {/* Render Markdown Preview if md */}
-          {isMarkdown && (
-            <div className="w-full mt-6 rounded-2xl border border-border bg-card p-6 md:p-8 shadow-card prose dark:prose-invert max-w-full">
-              <MarkdownPreviewer fileId={file._id} />
-            </div>
+          {/* Render Markdown Preview Modal */}
+          {isMarkdown && file && (
+            <MarkdownPreviewModal
+              open={mdPreviewOpen}
+              onClose={() => setMdPreviewOpen(false)}
+              fileName={file.name}
+              fileId={file._id}
+              fileUrl={`${API_URL}/files/download/${file._id}`}
+            />
           )}
 
         </main>
@@ -253,6 +273,12 @@ const ShareLandingPage = () => {
           <Share2 className="h-5 w-5 text-primary animate-pulse" />
           <span className="font-bold text-foreground text-sm tracking-tight">DocVault Share</span>
         </div>
+        <button
+          onClick={() => window.open(`${API_URL}/folders/download/${rootFolder._id}`)}
+          className="h-8 px-4 flex items-center gap-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/95 transition-all shadow-soft"
+        >
+          <Download className="h-3.5 w-3.5" /> Download Folder
+        </button>
       </header>
 
       {/* Main Folder Layout */}
@@ -405,11 +431,21 @@ const ShareLandingPage = () => {
 
               {/* Render Markdown Preview */}
               {previewFile.name.endsWith('.md') && (
-                <div className="flex-1 border border-border rounded-xl p-4 bg-muted/20 overflow-auto prose dark:prose-invert max-w-full text-xs">
+                <div className="flex-1 flex flex-col border border-border rounded-xl p-4 bg-muted/20 overflow-hidden text-xs">
                   {previewLoading ? (
                     <RefreshCw className="h-4 w-4 animate-spin text-primary mx-auto" />
                   ) : (
-                    <div dangerouslySetInnerHTML={{ __html: previewContent }} />
+                    <>
+                      <div className="flex-1 overflow-auto prose dark:prose-invert max-w-full" dangerouslySetInnerHTML={{ __html: previewContent }} />
+                      <div className="pt-3 border-t border-border/50 mt-3 flex justify-center">
+                        <button
+                          onClick={() => setMdPreviewOpen(true)}
+                          className="h-8 px-3 rounded-lg bg-card border border-border hover:bg-muted text-[11px] font-semibold transition-colors flex items-center gap-1.5 shadow-sm"
+                        >
+                          <Eye className="h-3 w-3 text-primary" /> Open Full Viewer
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               )}
@@ -445,33 +481,19 @@ const ShareLandingPage = () => {
         )}
 
       </div>
+
+      {/* Render Markdown Preview Modal for Folder View */}
+      {previewFile?.name?.endsWith('.md') && (
+        <MarkdownPreviewModal
+          open={mdPreviewOpen}
+          onClose={() => setMdPreviewOpen(false)}
+          fileName={previewFile.name}
+          fileId={previewFile._id}
+          fileUrl={`${API_URL}/files/download/${previewFile._id}`}
+        />
+      )}
     </div>
   );
-};
-
-// Markdown loading previewer
-const MarkdownPreviewer = ({ fileId }: { fileId: string }) => {
-  const [content, setContent] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch(`${API_URL}/files/download/${fileId}`)
-      .then(res => res.text())
-      .then(text => {
-        setContent(marked.parse(text) as string);
-        setLoading(false);
-      })
-      .catch(() => {
-        setContent('<p className="text-destructive">Failed to load markdown contents.</p>');
-        setLoading(false);
-      });
-  }, [fileId]);
-
-  if (loading) {
-    return <RefreshCw className="h-5 w-5 text-primary animate-spin mx-auto" />;
-  }
-
-  return <div dangerouslySetInnerHTML={{ __html: content }} />;
 };
 
 export default ShareLandingPage;

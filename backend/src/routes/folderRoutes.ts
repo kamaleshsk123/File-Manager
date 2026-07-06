@@ -1,5 +1,13 @@
 import { Router, Request, Response } from 'express';
 import Folder from '../models/Folder';
+import File from '../models/File';
+import mongoose from 'mongoose';
+import { GridFSBucket, ObjectId } from 'mongodb';
+import path from 'path';
+import fs from 'fs';
+import { createRequire } from 'module';
+// archiver@5.x is CommonJS - must use require()
+const archiver = createRequire(__filename)('archiver');
 import crypto from 'crypto';
 
 const router = Router();
@@ -218,6 +226,63 @@ router.post('/:id/copy', async (req: Request, res: Response) => {
     res.status(201).json(newFolder);
   } catch (error) {
     res.status(500).json({ error: 'Failed to copy folder' });
+  }
+});
+
+// Download folder as ZIP
+router.get('/download/:id', async (req: Request, res: Response) => {
+  try {
+    const rootFolder = await Folder.findById(req.params.id);
+    if (!rootFolder) return res.status(404).json({ error: 'Folder not found' });
+
+    res.set('Content-Type', 'application/zip');
+    res.set('Content-Disposition', `attachment; filename="${rootFolder.name}.zip"`);
+
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.pipe(res);
+
+    archive.on('error', (err: any) => {
+      console.error('Archive error:', err);
+    });
+
+    const db = mongoose.connection.db;
+    const bucket = db ? new GridFSBucket(db, { bucketName: 'uploads' }) : null;
+    const uploadDir = path.join(__dirname, '../../uploads');
+
+    // Helper to recursively append contents
+    const appendFolder = async (folderId: string, currentPath: string) => {
+        const files = await File.find({ folderId, isDeleted: false });
+        for (const file of files) {
+            const filePath = `${currentPath}${file.name}`;
+            if (ObjectId.isValid(file.filename) && bucket) {
+                // GridFS File
+                const stream = bucket.openDownloadStream(new ObjectId(file.filename));
+                archive.append(stream, { name: filePath });
+            } else {
+                // Legacy local disk file
+                const localPath = path.join(uploadDir, file.filename);
+                if (fs.existsSync(localPath)) {
+                    archive.append(fs.createReadStream(localPath), { name: filePath });
+                }
+            }
+        }
+
+        const subFolders = await Folder.find({ parentFolderId: folderId, isDeleted: false });
+        for (const subFolder of subFolders) {
+            archive.append('', { name: `${currentPath}${subFolder.name}/` });
+            await appendFolder(subFolder.id, `${currentPath}${subFolder.name}/`);
+        }
+    };
+
+    // Begin recursion
+    await appendFolder(rootFolder.id, `${rootFolder.name}/`);
+    await archive.finalize();
+
+  } catch (error) {
+    console.error('Folder download failed:', error);
+    if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to generate folder zip' });
+    }
   }
 });
 

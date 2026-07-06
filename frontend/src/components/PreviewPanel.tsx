@@ -3,6 +3,7 @@ import {
   Folder, FileText, Image as ImageIcon, Film, Music,
   Archive, Code, File, Download, ExternalLink, X, FolderOpen
 } from 'lucide-react';
+import { API_URL } from '../api';
 
 interface PreviewPanelProps {
   item: {
@@ -74,7 +75,7 @@ export const PreviewPanel = ({ item, onClose, onOpenFolder, onOpenFile }: Previe
     previewElement = (
       <div className="h-28 w-full rounded-xl border border-border bg-muted overflow-hidden flex items-center justify-center shadow-sm">
         <img
-          src={`http://localhost:5000/uploads/${item.filename}`}
+          src={`${API_URL}/files/download/${item._id}`}
           alt={item.name}
           className="h-full w-full object-cover"
         />
@@ -162,25 +163,33 @@ export const PreviewPanel = ({ item, onClose, onOpenFolder, onOpenFile }: Previe
         {/* Action Button */}
         <div className="w-full mt-auto">
           {isFolder ? (
-            <button
-              onClick={() => onOpenFolder?.(item._id, item.name)}
-              className="w-full flex items-center justify-center gap-2 h-10 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all shadow-soft"
-            >
-              <FolderOpen className="h-4 w-4" /> Open Folder
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => onOpenFolder?.(item._id, item.name)}
+                className="w-full flex items-center justify-center gap-2 h-10 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted transition-colors"
+              >
+                <FolderOpen className="h-4 w-4" /> Open Folder
+              </button>
+              <button
+                onClick={() => window.open(`${API_URL}/folders/download/${item._id}`)}
+                className="w-full flex items-center justify-center gap-2 h-10 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all shadow-soft"
+              >
+                <Download className="h-4 w-4" /> Download ZIP
+              </button>
+            </div>
           ) : (
             <div className="flex flex-col gap-2">
               <button
                 onClick={() => {
                   if (onOpenFile) onOpenFile(item);
-                  else window.open(`http://localhost:5000/uploads/${item.filename}`);
+                  else window.open(`${API_URL}/files/download/${item._id}`);
                 }}
                 className="w-full flex items-center justify-center gap-2 h-10 rounded-xl border border-border bg-card text-foreground text-sm font-semibold hover:bg-muted transition-colors"
               >
                 <ExternalLink className="h-4 w-4" /> Open File
               </button>
               <button
-                onClick={() => window.open(`http://localhost:5000/api/files/download/${item._id}`)}
+                onClick={() => window.open(`${API_URL}/files/download/${item._id}`)}
                 className="w-full flex items-center justify-center gap-2 h-10 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all shadow-soft"
               >
                 <Download className="h-4 w-4" /> Download File

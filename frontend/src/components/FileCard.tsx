@@ -4,6 +4,7 @@ import {
   Code, File, MoreVertical, PenLine, Trash2, Share2, Download
 } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { API_URL } from '../api';
 
 interface FileCardProps {
   file: {
@@ -89,7 +90,7 @@ export const FileCard = ({ file, selected, onSelect, onDoubleClick, onDelete, on
           >
             <div
               className="win-context-menu-item"
-              onClick={() => { setMenuOpen(false); window.open(`http://localhost:5000/api/files/download/${file._id}`); }}
+              onClick={() => { setMenuOpen(false); window.open(`${API_URL}/${file.isFolder ? 'folders' : 'files'}/download/${file._id}`); }}
             >
               <Download className="h-3.5 w-3.5 text-muted-foreground" />
               Download
