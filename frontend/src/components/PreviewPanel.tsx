@@ -189,7 +189,12 @@ export const PreviewPanel = ({ item, onClose, onOpenFolder, onOpenFile }: Previe
                 <ExternalLink className="h-4 w-4" /> Open File
               </button>
               <button
-                onClick={() => window.open(`${API_URL}/files/download/${item._id}`)}
+                onClick={() => {
+                  const a = document.createElement('a');
+                  a.href = `${API_URL}/files/download/${item._id}?attachment=1`;
+                  a.download = item.name;
+                  a.click();
+                }}
                 className="w-full flex items-center justify-center gap-2 h-10 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all shadow-soft"
               >
                 <Download className="h-4 w-4" /> Download File

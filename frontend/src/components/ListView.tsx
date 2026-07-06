@@ -151,7 +151,17 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename, 
             >
               <div
                 className="win-context-menu-item"
-                onClick={() => { setMenuOpen(false); window.open(`${API_URL}/${item.isFolder ? 'folders' : 'files'}/download/${item._id}`); }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  if (item.isFolder) {
+                    window.open(`${API_URL}/folders/download/${item._id}`);
+                  } else {
+                    const a = document.createElement('a');
+                    a.href = `${API_URL}/files/download/${item._id}?attachment=1`;
+                    a.download = item.name;
+                    a.click();
+                  }
+                }}
               >
                 <Download className="h-3.5 w-3.5 text-muted-foreground" />
                 Download
