@@ -3,6 +3,25 @@ if (_apiUrl.endsWith('/')) _apiUrl = _apiUrl.slice(0, -1);
 if (!_apiUrl.endsWith('/api')) _apiUrl += '/api';
 export const API_URL = _apiUrl;
 
+/**
+ * Downloads a file from the backend as a blob.
+ * Works cross-origin (e.g. Vercel → Render) unlike anchor[download].
+ */
+export const downloadFile = async (fileId: string, fileName: string): Promise<void> => {
+  const res = await fetch(`${API_URL}/files/download/${fileId}?attachment=1`);
+  if (!res.ok) throw new Error('Download failed');
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+
 export const fetchStorage = async (): Promise<{ usedBytes: number; totalFiles: number }> => {
   const res = await fetch(`${API_URL}/storage`);
   if (!res.ok) throw new Error('Failed to fetch storage stats');

@@ -5,7 +5,7 @@ import {
   ChevronUp, ChevronDown
 } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
-import { API_URL } from '../api';
+import { API_URL, downloadFile } from '../api';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -156,10 +156,7 @@ const ListRow = ({ item, selected, onSelect, onDoubleClick, onDelete, onRename, 
                   if (item.isFolder) {
                     window.open(`${API_URL}/folders/download/${item._id}`);
                   } else {
-                    const a = document.createElement('a');
-                    a.href = `${API_URL}/files/download/${item._id}?attachment=1`;
-                    a.download = item.name;
-                    a.click();
+                    downloadFile(item._id, item.name).catch(() => alert('Download failed'));
                   }
                 }}
               >
