@@ -269,7 +269,8 @@ router.get('/download/:id', async (req: Request, res: Response) => {
 
         const subFolders = await Folder.find({ parentFolderId: folderId, isDeleted: false });
         for (const subFolder of subFolders) {
-            archive.append('', { name: `${currentPath}${subFolder.name}/` });
+            // Create an explicit directory entry for the subfolder
+            archive.append(Buffer.alloc(0), { name: `${currentPath}${subFolder.name}/` });
             await appendFolder(subFolder.id, `${currentPath}${subFolder.name}/`);
         }
     };
